@@ -1,0 +1,93 @@
+/* Ajustes para los controles de Shiny: listas (selectize), deslizadores, tablas y salidas.
+   Reproducen el aspecto de los componentes de Dash 4 del dashboard original. */
+
+/* ---------- salidas de Shiny ---------- */
+.shiny-html-output.recalculating { opacity: 1; }
+.shiny-html-output.recalculating .graph, .shiny-html-output.recalculating .dtable { opacity: .55; transition: opacity .25s; }
+#content { display: block; }
+.shiny-input-container { margin: 0; }
+.shiny-input-container:not(.shiny-input-container-inline) { width: 100%; max-width: 100%; }
+.graph .plotly.html-widget { width: 100% !important; }
+.graph { position: relative; }
+.shiny-notification, #shiny-disconnected-overlay { font-family: Inter, sans-serif; }
+#shiny-disconnected-overlay { background: rgba(5, 10, 24, .7); }
+
+/* ---------- listas desplegables ---------- */
+.field .selectize-control { margin: 0; }
+.selectize-control.single .selectize-input, .selectize-control.multi .selectize-input {
+  min-height: 38px; padding: 8px 34px 8px 12px; border-radius: 10px; border: 1px solid #2a3b5e; background: var(--panel-solid) !important;
+  color: var(--text); box-shadow: none; font: 400 14.5px Inter, sans-serif; line-height: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.selectize-control.single .selectize-input.input-active { cursor: text; }
+.selectize-control .selectize-input > input { color: var(--text) !important; font: inherit; }
+.selectize-control .selectize-input.focus { border-color: var(--cyan); box-shadow: 0 0 0 2px color-mix(in srgb, var(--cyan) 25%, transparent); }
+.selectize-control.single .selectize-input::after, .selectize-control.single .selectize-input.dropdown-active::after {
+  content: '' !important; position: absolute; right: 16px !important; top: 50% !important; width: 6px !important; height: 6px !important; margin-top: -5px !important;
+  border-style: solid !important; border-color: var(--soft) !important; border-width: 0 1.5px 1.5px 0 !important; transform: rotate(45deg); display: block !important; }
+.selectize-control.single .selectize-input.dropdown-active::after { transform: rotate(-135deg); margin-top: -1px !important; }
+.selectize-dropdown { background: var(--panel-solid); color: var(--text); border: 1px solid #2a3b5e; border-radius: 10px; margin-top: 4px; overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .35); z-index: 1000; font: 400 14.5px Inter, sans-serif; }
+.selectize-dropdown-content { max-height: 280px; padding: 4px; }
+.selectize-dropdown .option { padding: 8px 10px; border-radius: 7px; color: var(--soft); }
+.selectize-dropdown .option.active, .selectize-dropdown .option:hover { background: #13284a; color: var(--text); }
+.selectize-dropdown .option.selected { color: var(--text); font-weight: 500; }
+.selectize-control.multi .selectize-input > div { background: color-mix(in srgb, var(--cyan) 18%, transparent); color: var(--text); border-radius: 6px; padding: 2px 6px; margin: 0; border: 0; }
+.selectize-control.plugin-remove_button .item .remove { border-left: 0; color: var(--soft); padding: 0 4px; }
+html[data-theme=light] .selectize-control .selectize-input, html[data-theme=light] .selectize-dropdown { border-color: #cbd5e1; }
+html[data-theme=light] .selectize-dropdown .option.active, html[data-theme=light] .selectize-dropdown .option:hover { background: #eef4fb; }
+.filters .selectize-dropdown, .controls-card .selectize-dropdown { z-index: 1000; }
+
+/* ---------- deslizadores ---------- */
+.dslider { display: flex; align-items: flex-start; gap: 10px; }
+.ds-body { flex: 1; min-width: 0; }
+.ds-track { position: relative; height: 14px; }
+.ds-rail, .ds-fill { position: absolute; top: 5px; height: 4px; border-radius: 4px; }
+.ds-rail { left: 0; right: 0; background: #1c2945; }
+.ds-fill { background: var(--cyan); }
+.ds-in { position: absolute; inset: 0; width: 100%; margin: 0; background: transparent; pointer-events: none; -webkit-appearance: none; appearance: none; height: 14px; }
+.ds-in::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--cyan); border: 2px solid #cfe6f1; cursor: grab; box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 18%, transparent); }
+.ds-in::-moz-range-thumb { pointer-events: auto; width: 10px; height: 10px; border-radius: 50%; background: var(--cyan); border: 2px solid #cfe6f1; cursor: grab; }
+.ds-in::-webkit-slider-runnable-track { background: transparent; }
+.ds-in::-moz-range-track { background: transparent; }
+.ds-marks { position: relative; height: 20px; }
+.ds-marks span { position: absolute; transform: translateX(-50%); top: 6px; font-size: 12.5px; line-height: 14px; color: var(--muted); }
+.ds-marks span::before { content: ''; position: absolute; left: 50%; top: -5px; width: 4px; height: 4px; border-radius: 50%; background: #2a3b5e; transform: translateX(-50%); }
+.ds-marks span.in { color: var(--text); }
+.ds-box { width: 34px; height: 34px; padding: 0 6px; text-align: center; border-radius: 4px; border: 1px solid #2a3b5e; background: var(--panel-solid); color: var(--text);
+  font: 400 16px Inter, sans-serif; -moz-appearance: textfield; flex: none; box-sizing: border-box; }
+.ds-box::-webkit-outer-spin-button, .ds-box::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.ds-tip { position: absolute; bottom: 20px; transform: translateX(-50%); padding: 3px 8px; border-radius: 6px; background: var(--panel-solid); border: 1px solid #2a3b5e;
+  color: var(--text); font-size: 12px; white-space: nowrap; pointer-events: none; }
+html[data-theme=light] .ds-rail { background: #e2e8f0; }
+html[data-theme=light] .ds-box, html[data-theme=light] .ds-tip { border-color: #cbd5e1; }
+html[data-theme=light] .ds-marks span::before { background: #cbd5e1; }
+
+/* ---------- tablas ---------- */
+.dtable { margin-top: 12px; }
+.dt-scroll { overflow-x: auto; }
+.dtable table { width: 100%; border-collapse: collapse; font: 400 13.5px Inter, sans-serif; }
+.dtable th { background: var(--table-head); color: var(--text); font-weight: 600; text-align: left; padding: 10px; border: none; white-space: nowrap; cursor: pointer; user-select: none; }
+.dtable td { background: var(--table-cell); color: var(--soft); padding: 10px; border-bottom: 1px solid var(--line); max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-sort { display: inline-block; width: 8px; height: 11px; margin-right: 3px; vertical-align: -1px; opacity: .55;
+  background: linear-gradient(currentColor, currentColor) 0 0 / 0 0 no-repeat; position: relative; }
+.dt-sort::before, .dt-sort::after { content: ''; position: absolute; left: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; }
+.dt-sort::before { top: 0; border-bottom: 4px solid currentColor; }
+.dt-sort::after { bottom: 0; border-top: 4px solid currentColor; }
+th[data-sort=asc] .dt-sort::after, th[data-sort=desc] .dt-sort::before { opacity: .2; }
+th[data-sort=asc] .dt-sort, th[data-sort=desc] .dt-sort { opacity: 1; }
+.dt-filter th { padding: 6px 10px; cursor: default; }
+.dt-filter input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line2); color: var(--text); font: 400 12.5px Inter, sans-serif; padding: 3px 0; }
+.dt-pager { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-top: 10px; color: var(--soft); font-size: 14px; }
+.dt-pager:empty { display: none; }
+.dt-pager button { min-width: 26px; height: 30px; border: 0; border-radius: 4px; background: transparent; color: var(--soft); font-size: 16px; cursor: pointer; }
+.dt-pager button:hover { background: color-mix(in srgb, var(--cyan) 15%, transparent); color: var(--text); }
+.dt-pager span { display: inline-flex; align-items: center; gap: 10px; }
+.dt-pager input { width: 34px; height: 26px; text-align: center; border: 0; border-bottom: 1px solid var(--line2); background: transparent; color: var(--text); font: inherit; -moz-appearance: textfield; }
+.dt-pager input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ---------- botones de Shiny ---------- */
+a.btn.shiny-download-link { text-decoration: none; }
+.export-row .btn .ic { margin-right: 6px; }
+.chat-messages.loading::after { content: ''; display: block; width: 36px; height: 8px; margin: 6px 0 4px 6px;
+  background: radial-gradient(circle closest-side, var(--cyan) 90%, transparent) 0 / 33% 100% repeat-x; animation: chatdots .9s infinite linear; opacity: .8; }
+@keyframes chatdots { to { background-position: 18px 0; } }
+.chat-loading > .chat-messages { flex: 1; }
