@@ -59,6 +59,9 @@ app_server <- function(input, output, session) {
   output$`models-output` <- renderUI({ req(input$`model-family`, input$`model-balance`, input$`model-metric`); L(); model_output(input$`model-family`, input$`model-balance`, input$`model-metric`) })
   output$`opt-output` <- renderUI({ req(input$`opt-family`); L(); opt_output(input$`opt-family`) })
   output$`explain-output` <- renderUI({ req(input$`explain-model`); L(); explain_output(input$`explain-model`) })
+  output$`cal-map-output` <- renderUI({ req(input$`cal-family`); L(); cal_map(input$`cal-family`) })
+  output$`eff-variants-output` <- renderUI({ req(input$`eff-family`); L(); eff_variants(input$`eff-family`) })
+  output$`eff-scale-output` <- renderUI({ req(input$`eff-scale`); L(); eff_scale(input$`eff-scale`) })
 
   # ---------------------------------------------------------------- simulador
   output$`sim-output` <- renderUI({

@@ -101,7 +101,8 @@ prep_tab <- function(i) {
 
 # ================================================================ 4. MODELADO AVANZADO
 METRICS <- c(f1_positive = N("F1 positivo"), recall_positive = "Recall", precision_positive = "Precision", roc_auc = "ROC-AUC", accuracy = "Accuracy")
-MODEL_TABS <- c(N("1 · Resultados por modelo"), N("2 · Calibración"), N("3 · Optimizadores"), N("4 · Comparación estadística"), N("5 · Interpretabilidad"))
+MODEL_TABS <- c(N("1 · Resultados por modelo"), N("2 · Calibración"), N("3 · Optimizadores"), N("4 · Multifidelidad"), N("5 · Eficiencia computacional"),
+                N("6 · Comparación estadística"), N("7 · Interpretabilidad"))
 
 podium <- function() {
   p <- list(c("2", "XGBoost", "SMOTE · Random", .638, "second"), c("1", "Random Forest", "SMOTE · TPE", .638, "first"), c("3", T("Reg. logística"), "SMOTE · Grid", .634, "third"))
@@ -127,10 +128,12 @@ model_tab <- function(i, input) {
                  field(T("Familia"), dropdown("model-family", c("Todas", names(MODELS)), keep("model-family", "Todas"), c(list(Todas = T("Todas")), fam))),
                  field(T("Balanceo"), dropdown("model-balance", c("Todos", names(BALANCES)), keep("model-balance", "Todos"), c(list(Todos = T("Todos")), setNames(as.list(balance_name(names(BALANCES))), names(BALANCES))))),
                  field(T("Métrica"), dropdown("model-metric", names(METRICS), keep("model-metric", "f1_positive"), setNames(as.list(T(unname(METRICS))), names(METRICS)))))),
-            uiOutput("models-output")),
+            uiOutput("models-output"), robustez()),
     calibration_summary(),
-    tagList(card(cls = "controls-card", field(T("Familia"), dropdown("opt-family", names(MODELS), keep("opt-family", "random_forest"), fam))), uiOutput("opt-output")),
-    estadistica(),
+    tagList(card(cls = "controls-card", field(T("Familia"), dropdown("opt-family", names(MODELS), keep("opt-family", "random_forest"), fam))), uiOutput("opt-output"), optimizer_effects()),
+    multifidelidad(),
+    eficiencia(),
+    tagList(estadistica(), effect_sizes()),
     tagList(card(cls = "controls-card", field(T("Modelo explicado"), dropdown("explain-model", FINALISTS[1:2], keep("explain-model", FINALISTS[1]), setNames(as.list(T(unname(FINALIST_NAMES[FINALISTS[1:2]]))), FINALISTS[1:2]))),
                  uiOutput("explain-output")),
             note(T("Explicar no es causar"), T("Las atribuciones describen cómo decide el modelo, no qué provoca el abandono. Los casos locales se eligieron por máxima confianza, no por ser representativos."))))
@@ -143,20 +146,6 @@ ranking_families <- function() {
                                marker = list(color = highlight(s$f1_positive_mean, nrow(s)))) %>%
     bar_labels(s$f1_positive_mean, s$n, .551) %>% layout(xaxis = list(range = c(.55, .68), title = T("F1 positivo · media de 5 folds externos")), yaxis = cat_axis(s$n))
   chart(T("Mejor configuración de cada familia"), f, T("Barras: media de los folds externos; bigotes: desviación estándar. Random Forest y XGBoost empatan arriba (0.638)."), 380, FALSE)
-}
-
-calibration_summary <- function() {
-  u <- UNITS[UNITS$replicate == 0, ]
-  g <- stats::aggregate(u[c("brier", "cal_brier", "ece", "cal_ece")], list(model = u$model), mean, na.action = na.pass, na.rm = TRUE)
-  g[is.na(g)] <- NA; for (c in c("brier", "ece")) g[[c]][is.nan(g[[c]])] <- NA
-  g$n <- model_name(g$model)
-  bars <- function(a_, b_, title) plot_ly() %>% add_trace(type = "bar", x = g$n, y = g[[a_]], name = T("Nativa"), marker = list(color = BASE)) %>%
-    add_trace(type = "bar", x = g$n, y = g[[b_]], name = T("Sigmoide"), marker = list(color = HOT)) %>% layout(barmode = "group", xaxis = cat_axis(g$n), yaxis = list(title = title))
-  tagList(kpis(kpi(T("CONFIGURACIONES MEJORADAS"), 80, T("de 96 con probabilidad nativa")), kpi(T("MÉTODO"), "Platt", T("sigmoide dentro del entrenamiento")),
-               kpi(T("INTERVALOS ECE"), 10, T("uniformes")), kpi("SVM", T("solo sigmoide"), T("sin probabilidad nativa"))),
-          grid(chart(T("Puntaje de Brier por familia"), bars("brier", "cal_brier", "Brier"), T("Menor es mejor. Promedio sobre balanceos, optimizadores y folds externos."), 360),
-               chart(T("ECE por familia"), bars("ece", "cal_ece", "ECE"), T("Distancia entre la probabilidad predicha y la frecuencia observada; la rama sigmoide la reduce en casi todas las familias."), 360)),
-          note(T("Síntesis de la calibración"), T("La calibración sigmoide redujo a la vez Brier y ECE en 80 de 96 configuraciones con probabilidad nativa. No mejora todas, y no se usó para elegir el ranking principal.")))
 }
 
 estadistica <- function() {
@@ -207,7 +196,7 @@ res_output <- function(family) {
     add_trace(type = "scatter", mode = "lines", x = c(0, 1), y = c(0, 1), line = list(dash = "dash", color = GREY), name = T("Azar")) %>%
     layout(xaxis = list(title = T("Tasa de falsos positivos")), yaxis = list(title = "Recall"))
   fr <- plot_ly() %>% add_trace(type = "scatter", mode = "lines", x = c(0, 1), y = c(0, 1), line = list(dash = "dash", color = GREY), name = T("Calibración perfecta"))
-  for (cc in list(c("probability_native", T("Nativa"), BASE), c("probability_sigmoid", T("Sigmoide"), HOT))) {
+  for (cc in list(c("probability_native", T("Nativa"), SOFT), c("probability_sigmoid", T("Sigmoide (Platt)"), BASE), c("probability_isotonic", T("Isotónica"), HOT))) {
     v <- o[[cc[1]]]
     if (any(!is.na(v))) {
       b <- cut(v, seq(0, 1, length.out = 11), include.lowest = TRUE)

@@ -97,11 +97,18 @@ threshold_output <- function(experiment, threshold) {
 }
 
 # ================================================================ 6. CONCLUSIONES
+REPRO <- list(c("file", N("Versiones exactas"), N("requirements.txt fija cada librería usada en el entrenamiento.")),
+              c("shield", N("Verificación automática"), N("verificar_reproduccion.py compara versiones, huellas SHA-256 de los datos y los artefactos de las 1,680 unidades.")),
+              c("layers", N("Resultados versionados"), N("Pipelines, predicciones, checkpoints y semillas de cada unidad quedan guardados; el libro se construye sin reentrenar.")),
+              c("code", N("Código del experimento"), N("Un apéndice reproduce las 32 celdas exactas que entrenaron las 112 configuraciones.")))
+
 conclusiones <- function(d) {
   finds <- list(c("layers", N("El perfil de cuenta delata el riesgo"), N("Contrato, antigüedad y servicio de internet concentran la señal, en el EDA y en SHAP.")),
                 c("link", N("Empate en la cima"), N("Random Forest y XGBoost con SMOTE (F1 0.638) y la regresión logística (0.634) no se separan estadísticamente.")),
-                c("scale", N("Balancear importa más que buscar"), N("SMOTE mejoró el F1 en 6 de 7 familias; cambiar de optimizador casi no movió el resultado.")),
-                c("gauge", N("Probabilidades más honestas"), N("La calibración sigmoide mejoró Brier y ECE en 80 de 96 configuraciones.")))
+                c("scale", N("Balancear importa más que buscar"), N("SMOTE tiene efecto grande en 5 de 7 familias (δ de Cliff ≥ 0.68); cambiar de optimizador solo ayuda con presupuestos bajos.")),
+                c("gauge", N("Probabilidades más honestas"), N("Platt mejoró Brier y ECE en 80 de 96 configuraciones y la isotónica en 84: isotónica para árboles y GaussianNB, Platt para SVM y KNN.")),
+                c("hourglass", N("Buscar puede costar menos"), N("Successive Halving igualó el F1 de una búsqueda completa en Random Forest y SVM con 3.7× y 7.1× menos tiempo; en XGBoost no conviene.")),
+                c("flame", N("El costo está en el núcleo del algoritmo"), N("LinearSVC entrena 36× y predice unas 900× más rápido que SVC RBF con 0.002 menos de F1; hist acelera 2.8× a XGBoost.")))
   limits <- c(N("Un único conjunto de datos: los folds no son bloques independientes."), N("El test ya se había usado: es evidencia suplementaria."),
               N("Los datos son una foto: no garantizan anticipar el abandono futuro."), N("Sin costos de intervención, el F1 no se traduce en dinero."))
   steps <- list(c(N("Validación temporal"), N("Evaluar en clientes futuros.")), c(N("Costos explícitos"), N("Elegir el umbral con el costo de cada error.")),
@@ -111,6 +118,9 @@ conclusiones <- function(d) {
           div(class = "findings", lapply(finds, function(f) div(class = "finding", tags$span(class = "drv-icon", icon(f[1])), tags$h3(T(f[2])), tags$p(T(f[3]))))),
           grid(card(eyebrow(T("LIMITACIONES")), tags$ul(lapply(limits, function(x) tags$li(T(x))))),
                card(eyebrow(T("PRÓXIMOS PASOS")), div(lapply(seq_along(steps), function(k) div(class = "next", tags$span(class = "obj-n", sprintf("0%d", k)), div(tags$h4(T(steps[[k]][1])), tags$p(T(steps[[k]][2])))))))),
+          card(eyebrow(T("REPRODUCIBILIDAD")), tags$h3(T("Todo lo que se reporta se puede verificar")),
+               div(class = "repro", lapply(REPRO, function(r) div(class = "station", tags$span(class = "st-icon", icon(r[1])), tags$h4(T(r[2])), tags$p(T(r[3]))))),
+               tags$a(class = "chip-link", href = paste0(BOOK, "CODIGO_EXPERIMENTO.html"), target = "_blank", icon("code", "sm"), T("Ver el código del experimento en el Jupyter Book"), icon("arrow", "sm"))),
           card(cls = "glow", div(class = "paper-card",
                div(eyebrow(T("PAPER DEL PROYECTO")), tags$h2(T("Modelo de clasificación binaria para la predicción de abandono de clientes")),
                    tags$p(T("Metodología completa, tablas, figuras y referencias en formato Springer Nature."))),

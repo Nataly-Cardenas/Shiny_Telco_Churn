@@ -145,10 +145,61 @@
   "q": [
    "qué es la calibración",
    "brier ece",
-   "what is calibration"
+   "qué es la calibración isotónica",
+   "platt o isotónica",
+   "what is calibration",
+   "isotonic calibration"
   ],
-  "es": "La **calibración sigmoide** (Platt) ajusta las probabilidades para que reflejen la frecuencia real. Redujo a la vez el puntaje de Brier y el ECE en 80 de 96 configuraciones.",
-  "en": "**Sigmoid calibration** (Platt) adjusts probabilities so they match observed frequencies. It reduced both the Brier score and ECE in 80 of 96 configurations."
+  "es": "Balancear infla las probabilidades, así que se recalibraron con dos métodos: **Platt** (curva en S de dos parámetros) e **isotónica** (escalera no decreciente, sin forma fija). Platt mejoró Brier y ECE frente a la probabilidad nativa en 80 de 96 configuraciones y la isotónica en 84; entre ellas la diferencia de Brier está en la cuarta cifra decimal. Conviene isotónica en árboles y GaussianNB, y Platt en SVM y KNN. Míralo en *Modelado avanzado → 2 · Calibración*.",
+  "en": "Balancing inflates probabilities, so they were recalibrated two ways: **Platt** (a two-parameter S curve) and **isotonic** (a non-decreasing staircase with no fixed shape). Platt improved Brier and ECE over the native probability in 80 of 96 configurations and isotonic in 84; between them the Brier difference is in the fourth decimal. Isotonic suits trees and GaussianNB, Platt suits SVM and KNN. See *Advanced modeling → 2 · Calibration*."
+ },
+ {
+  "q": [
+   "qué es successive halving",
+   "qué es la multifidelidad",
+   "optimización multifidelidad",
+   "hyperband",
+   "what is successive halving",
+   "multi-fidelity"
+  ],
+  "es": "**Successive Halving** evalúa 27 candidatos con poco recurso (pocos árboles o pocas filas), descarta los peores en cada ronda y reserva el presupuesto completo para el ganador: 12 ajustes completos frente a 72. Igualó el F1 de una búsqueda completa en Random Forest y SVM con 3.7× y 7.1× menos tiempo, pero en XGBoost ahorró poco (1.6×) y eligió peor. Míralo en *Modelado avanzado → 4 · Multifidelidad*.",
+  "en": "**Successive Halving** evaluates 27 candidates with little resource (few trees or few rows), drops the worst each round and saves the full budget for the winner: 12 full fits instead of 72. It matched the F1 of a full search in Random Forest and SVM with 3.7× and 7.1× less time, but in XGBoost it saved little (1.6×) and picked worse. See *Advanced modeling → 4 · Multi-fidelity*."
+ },
+ {
+  "q": [
+   "eficiencia computacional",
+   "qué modelo es más rápido",
+   "linearsvc",
+   "optimizaciones computacionales",
+   "complejidad",
+   "paralelismo",
+   "computational efficiency",
+   "which model is fastest"
+  ],
+  "es": "El costo está en el núcleo de cada algoritmo: el 81 % del ajuste de SVM ocurre en su solver y el 84 % de la predicción de KNN en las distancias. SVM RBF escala como n². Cambiarlo por **LinearSVC** acelera 36× el entrenamiento y unas 900× la inferencia perdiendo solo 0.002 de F1; `hist` es 2.8× más rápido que el método exacto en XGBoost y paralelizar da 2× en Random Forest. Míralo en *Modelado avanzado → 5 · Eficiencia computacional*.",
+  "en": "The cost sits in the core of each algorithm: 81 % of the SVM fit is in its solver and 84 % of KNN prediction is distance computation. RBF SVM scales as n². Swapping it for **LinearSVC** speeds training up 36× and inference about 900× while losing only 0.002 F1; `hist` is 2.8× faster than the exact method in XGBoost and parallelizing gives 2× in Random Forest. See *Advanced modeling → 5 · Computational efficiency*."
+ },
+ {
+  "q": [
+   "qué es el tamaño del efecto",
+   "delta de cliff",
+   "importa la diferencia",
+   "effect size",
+   "cliff delta"
+  ],
+  "es": "El **tamaño del efecto** dice si una diferencia importa, no solo si es improbable por azar. Con el δ de Cliff, las diferencias entre los tres finalistas son despreciables (δ entre −0.06 y 0.10), mientras que SMOTE tiene un efecto grande en 5 de 7 familias (δ ≥ 0.68). Los 31 pares que separa Nemenyi tienen δ = 1. Míralo en *Modelado avanzado → 6 · Comparación estadística*.",
+  "en": "The **effect size** says whether a difference matters, not just whether it is unlikely by chance. With Cliff's δ, the differences among the three finalists are negligible (δ between −0.06 and 0.10), while SMOTE has a large effect in 5 of 7 families (δ ≥ 0.68). The 31 pairs Nemenyi separates have δ = 1. See *Advanced modeling → 6 · Statistical comparison*."
+ },
+ {
+  "q": [
+   "se puede reproducir",
+   "reproducibilidad",
+   "dónde está el código",
+   "is it reproducible",
+   "where is the code"
+  ],
+  "es": "Sí: `requirements.txt` fija las versiones exactas, `verificar_reproduccion.py` comprueba versiones, huellas SHA-256 de los datos y los artefactos de las 1,680 unidades, y el Jupyter Book incluye un apéndice con el código exacto del entrenamiento de las 112 configuraciones. Está resumido en *Conclusiones*.",
+  "en": "Yes: `requirements.txt` pins exact versions, `verificar_reproduccion.py` checks versions, SHA-256 fingerprints of the data and the artifacts of the 1,680 units, and the Jupyter Book includes an appendix with the exact training code of the 112 configurations. It is summarized in *Conclusions*."
  },
  {
   "q": [
@@ -167,8 +218,8 @@
    "interpretabilidad",
    "what is shap"
   ],
-  "es": "**SHAP** reparte cada predicción entre las variables (valores de Shapley) y su promedio da la importancia global. **LIME** explica un cliente concreto con un modelo simple local. Describen al modelo, no causas del abandono. Míralo en *Modelado avanzado → 5 · Interpretabilidad*.",
-  "en": "**SHAP** splits each prediction among the variables (Shapley values) and its average gives global importance. **LIME** explains one customer with a simple local model. They describe the model, not causes of churn. See *Advanced modeling → 5 · Interpretability*."
+  "es": "**SHAP** reparte cada predicción entre las variables (valores de Shapley) y su promedio da la importancia global. **LIME** explica un cliente concreto con un modelo simple local. Describen al modelo, no causas del abandono. Míralo en *Modelado avanzado → 7 · Interpretabilidad*.",
+  "en": "**SHAP** splits each prediction among the variables (Shapley values) and its average gives global importance. **LIME** explains one customer with a simple local model. They describe the model, not causes of churn. See *Advanced modeling → 7 · Interpretability*."
  },
  {
   "q": [
@@ -358,8 +409,8 @@
    "what is in the advanced modeling section",
    "what is the podium"
   ],
-  "es": "*Modelado avanzado* tiene el podio de finalistas y cinco pestañas: resultados por modelo (matriz de confusión, ROC y confiabilidad fuera de muestra), calibración, optimizadores (convergencia, diversidad y costo), comparación estadística (Friedman, Nemenyi, DeLong y curvas ROC en test) e interpretabilidad (SHAP y LIME).",
-  "en": "*Advanced modeling* has the finalists podium and five tabs: results by model (out-of-fold confusion matrix, ROC and reliability), calibration, optimizers (convergence, diversity and cost), statistical comparison (Friedman, Nemenyi, DeLong and test ROC curves) and interpretability (SHAP and LIME)."
+  "es": "*Modelado avanzado* tiene el podio de finalistas y siete pestañas: resultados por modelo (matriz de confusión, ROC, confiabilidad y robustez entre semillas), calibración Platt e isotónica, optimizadores (convergencia, diversidad, costo y tamaño del efecto), multifidelidad (Successive Halving), eficiencia computacional (perfilamiento, implementaciones alternativas, escalamiento y paralelismo), comparación estadística (Friedman, Nemenyi, DeLong y tamaños del efecto) e interpretabilidad (SHAP y LIME).",
+  "en": "*Advanced modeling* has the finalists podium and seven tabs: results by model (confusion matrix, ROC, reliability and robustness across seeds), Platt and isotonic calibration, optimizers (convergence, diversity, cost and effect size), multi-fidelity (Successive Halving), computational efficiency (profiling, alternative implementations, scaling and parallelism), statistical comparison (Friedman, Nemenyi, DeLong and effect sizes) and interpretability (SHAP and LIME)."
  },
  {
   "q": [
@@ -417,6 +468,18 @@
  },
  {
   "q": [
+   "quién eres",
+   "cómo te llamas",
+   "qué eres",
+   "por qué antena",
+   "who are you",
+   "what is your name"
+  ],
+  "es": "Soy **Antena**, la asistente de *Señal perdida*. Como una antena, mi trabajo es que nadie pierda la señal: te ayudo a entender los datos, los modelos y cada sección del dash. Respondo con la información del proyecto y, cuando preguntas por un perfil de clientes, calculo su tasa de abandono.",
+  "en": "I'm **Antena**, the *Lost signal* assistant. Like an antenna, my job is to keep everyone connected: I help you understand the data, the models and every section of the dash. I answer with the project's information and, when you ask about a customer profile, I compute its churn rate."
+ },
+ {
+  "q": [
    "hola",
    "buenas",
    "hello",
@@ -424,7 +487,7 @@
    "gracias",
    "thanks"
   ],
-  "es": "¡Hola! Puedo contarte sobre los datos, quiénes abandonan más, cómo se compararon los modelos, qué significan las métricas o cómo usar cada sección del dash. ¿Qué te gustaría saber?",
-  "en": "Hi! I can tell you about the data, who churns the most, how the models were compared, what the metrics mean or how to use each section of the dash. What would you like to know?"
+  "es": "¡Hola! Soy Antena. Puedo contarte sobre los datos, quiénes abandonan más, cómo se compararon los modelos, qué significan las métricas o cómo usar cada sección del dash. ¿Qué te gustaría saber?",
+  "en": "Hi! I'm Antena. I can tell you about the data, who churns the most, how the models were compared, what the metrics mean or how to use each section of the dash. What would you like to know?"
  }
 ]

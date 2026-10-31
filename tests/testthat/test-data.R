@@ -67,9 +67,33 @@ test_that("charts use one color plus the highlight", {
 })
 
 test_that("assistant answers from its own knowledge base and computes profiles", {
-  expect_false(exists("chunks")); expect_equal(length(FAQ), 42)
+  expect_false(exists("chunks")); expect_equal(length(FAQ), 47)
   a <- answer("¿Qué es el diagrama de Nemenyi?", list(), "es"); expect_match(a, "Nemenyi")
   a <- answer("tasa de abandono con fibra y mes a mes", list(), "es"); expect_match(a, "Contrato: Mes a mes", fixed = TRUE)
   expect_match(answer("precio del dolar hoy", list(), "es"), "No encontré")
   expect_match(answer("what is smote", list(), "en"), "SMOTE")
+})
+
+
+test_that("new Jupyter Book results (entregable 3) match the book", {
+  u <- UNITS[UNITS$replicate == 0, ]
+  base <- stats::aggregate(u[c("brier", "ece", "cal_brier", "cal_ece")], list(e = u$experiment_id), mean)
+  iu <- comp("isotonica_unidades"); iso <- stats::aggregate(iu[c("iso_brier", "iso_ece")], list(e = iu$experiment_id), mean)
+  m <- merge(base, iso, by = "e")
+  expect_equal(sum(m$iso_brier < m$cal_brier), 67); expect_equal(sum(m$iso_ece < m$cal_ece), 74)
+  n <- m[!is.na(m$brier), ]
+  expect_equal(sum(n$iso_brier < n$brier & n$iso_ece < n$ece), 84); expect_equal(sum(n$cal_brier < n$brier & n$cal_ece < n$ece), 80)
+  r <- comp("multifidelidad_resumen"); sp <- function(x) r$segundos[r$model == x & r$method == "random_completo"] / r$segundos[r$model == x & r$method == "successive_halving"]
+  expect_equal(round(c(sp("random_forest"), sp("svm"), sp("xgboost")), 1), c(3.7, 7.1, 1.6))
+  v <- comp("estandar_vs_optimizado"); expect_equal(round(v$aceleración_entrenamiento[v$variant == "LinearSVC"]), 36)
+  expect_equal(round(comp("escalamiento_exponentes")$exponente_n[comp("escalamiento_exponentes")$model == "svm rbf"], 1), 2)
+  expect_false(any(is.na(oof()$probability_isotonic)))
+})
+
+test_that("Antena introduces herself and the voice greeting is wired", {
+  expect_match(answer("¿cómo te llamas?", list(), "es"), "Antena")
+  expect_match(answer("qué es successive halving", list(), "es"), "Successive Halving")
+  js <- paste(readLines(file.path(root, "www", "antena.js"), encoding = "UTF-8"), collapse = "\n")
+  expect_match(js, "Hola, soy Antena, estoy aquí para resolver tus dudas", fixed = TRUE)
+  html <- render(chat_ui()); expect_match(html, "antena-bot", fixed = TRUE); expect_match(html, "chat-voice", fixed = TRUE)
 })
