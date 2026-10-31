@@ -95,5 +95,5 @@ test_that("Antena introduces herself and the voice greeting is wired", {
   expect_match(answer("qué es successive halving", list(), "es"), "Successive Halving")
   js <- paste(readLines(file.path(root, "www", "antena.js"), encoding = "UTF-8"), collapse = "\n")
   expect_match(js, "Hola, soy Antena, estoy aquí para resolver tus dudas", fixed = TRUE)
-  html <- render(chat_ui()); expect_match(html, "antena-face", fixed = TRUE); expect_match(html, "chat-voice", fixed = TRUE)
+  html <- render(chat_ui()); expect_match(html, "antena-bot", fixed = TRUE); expect_match(html, "chat-voice", fixed = TRUE)
 })

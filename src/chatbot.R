@@ -169,11 +169,11 @@ chat_ui <- function() {
           div(class = "chat-loading", uiOutput("chat-messages", class = "chat-messages")),
           tags$form(class = "chat-form", id = "chat-form", tags$input(id = "chat-input", type = "text", autocomplete = "off", maxlength = "400"),
                     tags$button(id = "chat-send", class = "chat-send", type = "button", icon("send")))),
-      tags$button(id = "chat-fab", class = "chat-fab", type = "button", title = "Antena", antena_face(""), tags$span(class = "fab-name", "Antena")))
+      tags$button(id = "chat-fab", class = "chat-fab", type = "button", title = "Antena", antena_face(""), tags$span(class = "bot-bubble")))
 }
 
-# Antena, la asistente: una antena que emite ondas (laten más rápido mientras habla; la voz está en www/antena.js).
-antena_face <- function(cls) tags$span(class = paste("antena-face", cls), icon("antenna"), tags$i(class = "wv"), tags$i(class = "wv w2"))
+# Antena, la asistente: www/antena.js dibuja dentro de este elemento el robot animado (y le da voz).
+antena_face <- function(cls) tags$span(class = paste("antena-bot", cls))
 
 md_html <- function(text) {
   h <- commonmark::markdown_html(text, extensions = TRUE)
