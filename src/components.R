@@ -12,6 +12,7 @@ LOW <- BASE; MID <- GREY; HIGH <- HOT                    # niveles de riesgo del
 SEQ <- list(list(0, "rgba(46,134,171,.06)"), list(1, BASE))   # escala de una sola tinta
 DIVERGING <- list(list(0, BASE), list(.5, "rgba(154,165,177,.15)"), list(1, HOT))
 GRID <- "rgba(139,147,167,.18)"
+SOFT <- "rgba(46,134,171,.45)"   # el mismo azul, más suave: la versión de referencia (sin calibrar, estándar)
 
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
@@ -111,27 +112,32 @@ table_ui <- function(d, page_size = 10, filter = FALSE) {
 style_fig <- function(p, height = 360, legend = TRUE, margin = NULL) {
   p <- plotly_build(p)
   L <- p$x$layout
+  below <- !is.null(L$legend$y) && L$legend$y < 0          # leyenda pedida debajo de la gráfica
+  margin <- margin %||% if (!is.null(L$margin$b)) L$margin  # margen propio de la figura
   axis <- list(gridcolor = GRID, zerolinecolor = GRID, linecolor = GRID, automargin = TRUE)
   # La matriz de dispersión crea un eje por dimensión al dibujar: se declaran para darles el mismo estilo.
   nd <- max(0, unlist(lapply(p$x$data, function(t) if (identical(t$type, "splom")) length(t$dimensions) else 0)))
   extra <- if (nd > 1) c(paste0("xaxis", 2:nd), paste0("yaxis", 2:nd)) else NULL
   for (ax in union(c("xaxis", "yaxis", extra), grep("^[xy]axis[0-9]*$", names(L), value = TRUE))) L[[ax]] <- utils::modifyList(L[[ax]] %||% list(), axis)
   L <- utils::modifyList(L, list(
-    paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", height = height, showlegend = legend,
+    paper_bgcolor = "rgba(0,0,0,0)", plot_bgcolor = "rgba(0,0,0,0)", autosize = TRUE, showlegend = legend,
     font = list(family = "Inter, sans-serif", color = "#8792a8", size = 13.5), colorway = c(BASE, HOT, GREY),
     margin = margin %||% list(l = 20, r = 20, t = 36, b = 30, pad = 0),
-    legend = list(orientation = "h", y = 1.14, title = list(text = ""), bgcolor = "rgba(0,0,0,0)"),
+    legend = list(orientation = "h", y = if (below) L$legend$y else 1.14, yanchor = if (below) "top" else "auto", title = list(text = ""), bgcolor = "rgba(0,0,0,0)"),
     hoverlabel = list(bgcolor = "#0b1426", bordercolor = BASE, font = list(family = "Inter", color = "#eaf2ff", size = 13)),
     # Ejes que Plotly crea al dibujar (matriz de dispersión) heredan la rejilla de la plantilla: se ajusta también ahí.
     template = list(layout = list(xaxis = axis, yaxis = axis))))
+  L$height <- NULL   # la altura la pone el contenedor (graph): así cada gráfica cabe completa en la pantalla al proyectar
   p$x$layout <- L
   p$x$config <- utils::modifyList(p$x$config %||% list(), list(displaylogo = FALSE, responsive = TRUE, modeBarButtonsToRemove = c("lasso2d", "select2d")))
-  p$height <- height; p$width <- NULL
+  p$height <- "100%"; p$width <- "100%"
   p$sizingPolicy$defaultWidth <- "100%"
   p
 }
 
-graph <- function(p, height = 360, legend = TRUE, margin = NULL) div(class = "graph", style = sprintf("height:%dpx;width:100%%", height), style_fig(p, height, legend, margin))
+# Nunca más alta que la pantalla disponible bajo la barra superior.
+graph <- function(p, height = 360, legend = TRUE, margin = NULL)
+  div(class = "graph", style = sprintf("height:min(%dpx, calc(100vh - 230px));min-height:%dpx;width:100%%", height, min(height, 240)), style_fig(p, height, legend, margin))
 
 chart <- function(title, p, insight = "", height = 360, legend = TRUE)
   card(tags$h3(class = "chart-title", title), graph(p, height, legend), if (nzchar(insight)) tags$p(class = "insight", insight))

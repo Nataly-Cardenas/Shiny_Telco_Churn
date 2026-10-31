@@ -47,12 +47,16 @@ Las secciones siguen los capítulos del Jupyter Book, con las mismas gráficas y
 - **Introducción:** contexto, objetivo general, objetivos específicos, marco teórico en tarjetas y descripción de variables.
 - **Análisis exploratorio:** filtros globales y pestañas numeradas en el orden del dash: ETL y partición, univariado, bivariado (pruebas, Cramér V y Holm), multivariado (Q-Q, Spearman, matriz de dispersión, KDE), valores faltantes, resumen y explorador con descarga CSV.
 - **Preprocesamiento:** pasos del pipeline, validación cruzada, ablación y evaluación del modelo base en test (matriz de confusión y ROC animada).
-- **Modelado avanzado:** podio; resultados por modelo (matriz de confusión, ROC y confiabilidad), calibración, optimizadores, comparación estadística (Friedman, Nemenyi, DeLong) e interpretabilidad (SHAP global, waterfall y LIME).
+- **Modelado avanzado:** podio y siete pestañas: resultados por modelo (matriz de confusión, ROC, confiabilidad y robustez entre semillas), calibración Platt frente a isotónica, optimizadores (convergencia, diversidad, costo y tamaño del efecto frente a Grid), multifidelidad (Successive Halving), eficiencia computacional (perfilamiento, implementaciones alternativas, escalamiento en n y p, paralelismo y tabla estándar frente a optimizado), comparación estadística (Friedman, Nemenyi, DeLong y tamaños del efecto) e interpretabilidad (SHAP global, waterfall y LIME).
 - **Simulador:** herramienta creada para el dash (perfil de riesgo, clientes reales del test y laboratorio de umbral).
-- **Conclusiones:** hallazgos, limitaciones, próximos pasos y enlace al paper.
+- **Conclusiones:** hallazgos, limitaciones, próximos pasos, reproducibilidad (con enlace al código del experimento) y enlace al paper.
 - **Autoras:** fotos, LinkedIn, GitHub y correo.
 
 Cada capítulo tiene un único enlace a su versión en el Jupyter Book, debajo del título. Las secciones usan fragmentos de URL (`#eda`, `#modelado`, etc.), así que admiten enlaces directos y los botones de atrás/adelante del navegador. El diseño se adapta a móvil y respeta `prefers-reduced-motion`.
+
+## Tamaño para proyectar
+
+Cada gráfica toma como alto máximo el espacio visible bajo la barra superior (`min(alto, 100vh − 230 px)`), así que se ve completa sin desplazarse incluso en 1280 × 720. La tipografía se mantiene legible para proyección y el menú cabe en una sola fila desde 1180 px.
 
 ## Idioma, tema y paleta
 
@@ -61,9 +65,9 @@ Cada capítulo tiene un único enlace a su versión en el Jupyter Book, debajo d
 - **Íconos:** íconos de línea propios (`src/icons.R`), sin emojis.
 - **Paleta:** las gráficas usan un solo color (`#2E86AB` azul) y cambian a `#E4572E` naranja solo para resaltar el mejor resultado o la clase de interés; `#9AA5B1` gris para referencias. El título de la portada y los botones llevan un degradado azul → naranja. Un test verifica que las gráficas no usen otros colores.
 
-## Asistente
+## Asistente: Antena
 
-El botón flotante abre un asistente sin límite de preguntas que responde sobre el proyecto, sus datos y cada sección del dashboard, con su propia base de conocimiento (`data/faq.json`). Para preguntas sobre perfiles concretos, como «tasa de abandono de clientes con fibra y mes a mes», calcula la cifra sobre el conjunto de entrenamiento.
+El botón flotante abre a **Antena**, la asistente del dashboard. Al abrirla saluda en voz alta con una voz femenina («Hola, soy Antena, estoy aquí para resolver tus dudas. ¿En qué te puedo ayudar?»), en español o inglés según el idioma elegido. La voz es la del navegador (Web Speech API, `www/antena.js`): en Edge y Chrome para Windows suena natural; el botón del altavoz la silencia y la elección se recuerda. Es un asistente sin límite de preguntas que responde sobre el proyecto, sus datos y cada sección del dashboard, con su propia base de conocimiento (`data/faq.json`). Para preguntas sobre perfiles concretos, como «tasa de abandono de clientes con fibra y mes a mes», calcula la cifra sobre el conjunto de entrenamiento.
 
 - **Sin configuración**, responde con la base de conocimiento local (búsqueda TF-IDF por n-gramas de caracteres, la misma del dashboard de Dash).
 - **Con la variable de entorno `ANTHROPIC_API_KEY`**, redacta las respuestas con Claude (`claude-opus-5-5`) usando ese mismo contexto, y vuelve a la respuesta local si la API falla. Cada pregunta consume créditos de la API de Anthropic.
@@ -95,9 +99,11 @@ En shinyapps.io la variable se define en un archivo `.Renviron` junto a `app.R` 
 - `src/pages_eda.R`, `src/pages_model.R`, `src/pages_other.R`: portada y secciones con sus gráficas.
 - `src/components.R`: paleta, tarjetas, KPIs, tablas, deslizadores, pestañas y estilo común de las gráficas.
 - `src/analytics.R`, `src/eda.R`: datos, cohortes, ROC, umbral, clientes similares y pruebas estadísticas.
+- `src/pages_model_extra.R`: resultados del entregable 3 (robustez, calibración isotónica, multifidelidad, eficiencia computacional y tamaños del efecto).
 - `src/chatbot.R`: asistente (búsqueda, cálculo de perfiles y conexión opcional con Claude).
 - `src/i18n.R`, `src/icons.R`: traducción e íconos.
 - `www/style.css`, `www/shiny.css`: diseño visual, animaciones y estilos de los controles.
+- `www/antena.js`: voz y animación de Antena.
 - `www/cover.js`: red de clientes, celular 3D y contadores animados; `www/app.js`: navegación, idioma, tema, pestañas, deslizadores, tablas y asistente.
 - `data/`: CSV, interpretabilidad, traducciones y base del asistente, unos 11 MB.
 - `tests/testthat/`: integridad del split, métricas, filtros, estadísticas del EDA, artefactos del modelado, colores, traducciones, asistente y que todas las páginas se generen en ES/EN.

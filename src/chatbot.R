@@ -162,14 +162,18 @@ answer <- function(question, history, lang) {
 chat_ui <- function() {
   div(id = "chat", class = "chat",
       div(id = "chat-panel", class = "chat-panel",
-          div(class = "chat-head", tags$span(class = "chat-avatar", icon("signal")), div(tags$strong(id = "chat-title"), tags$small(id = "chat-sub")),
+          div(class = "chat-head", antena_face("chat-avatar"), div(tags$strong(id = "chat-title"), tags$small(id = "chat-sub")),
+              tags$button(id = "chat-voice", class = "icon-btn voice", type = "button", icon("volume", "on"), icon("mute", "off")),
               tags$button(id = "chat-close", class = "icon-btn", type = "button", icon("close"))),
           div(class = "chat-quota", tags$span(id = "chat-quota"), tags$button(id = "chat-new", class = "chat-new", type = "button", icon("reset", "sm"), tags$span(id = "chat-new-t"))),
           div(class = "chat-loading", uiOutput("chat-messages", class = "chat-messages")),
           tags$form(class = "chat-form", id = "chat-form", tags$input(id = "chat-input", type = "text", autocomplete = "off", maxlength = "400"),
                     tags$button(id = "chat-send", class = "chat-send", type = "button", icon("send")))),
-      tags$button(id = "chat-fab", class = "chat-fab", type = "button", icon("chat")))
+      tags$button(id = "chat-fab", class = "chat-fab", type = "button", title = "Antena", antena_face(""), tags$span(class = "fab-name", "Antena")))
 }
+
+# Antena, la asistente: una antena que emite ondas (laten más rápido mientras habla; la voz está en www/antena.js).
+antena_face <- function(cls) tags$span(class = paste("antena-face", cls), icon("antenna"), tags$i(class = "wv"), tags$i(class = "wv w2"))
 
 md_html <- function(text) {
   h <- commonmark::markdown_html(text, extensions = TRUE)
@@ -179,7 +183,7 @@ md_html <- function(text) {
 bubble <- function(role, text) div(class = paste("msg", role), md_html(text))
 
 chat_messages <- function(log) {
-  hello <- T("¡Hola! Soy el asistente de Señal perdida. Pregúntame lo que quieras sobre el proyecto, sus datos o cualquier sección del dash: no hay límite de preguntas.")
+  hello <- T("¡Hola! Soy Antena, estoy aquí para resolver tus dudas. ¿En qué te puedo ayudar? Pregúntame por los datos, los modelos o cualquier sección del dash: no hay límite de preguntas.")
   tagList(bubble("assistant", hello),
           if (!length(log)) div(class = "chat-chips", lapply(SUGGESTIONS, function(s) tags$button(type = "button", class = "chat-chip", `data-q` = T(s), T(s)))),
           lapply(log, function(m) bubble(m$role, m$text)))
@@ -187,7 +191,7 @@ chat_messages <- function(log) {
 
 chat_texts <- function(log) {
   asked <- sum(vapply(log, function(m) m$role == "user", TRUE))
-  list(quota = fmt(T("Preguntas ilimitadas · {n} en esta conversación"), n = asked), title = T("Asistente Señal"),
-       sub = paste(T("Datos: proyecto Telco Churn"), "·", if (has_api()) T("Respuestas con Claude") else T("Respuestas del proyecto")),
+  list(quota = fmt(T("Preguntas ilimitadas · {n} en esta conversación"), n = asked), title = "Antena",
+       sub = paste(T("Asistente de Señal perdida"), "·", if (has_api()) T("Respuestas con Claude") else T("Respuestas del proyecto")),
        placeholder = T("Pregunta lo que quieras sobre el dash…"), new = T("Nueva conversación"))
 }
