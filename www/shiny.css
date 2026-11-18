@@ -91,3 +91,12 @@ a.btn.shiny-download-link { text-decoration: none; }
   background: radial-gradient(circle closest-side, var(--cyan) 90%, transparent) 0 / 33% 100% repeat-x; animation: chatdots .9s infinite linear; opacity: .8; }
 @keyframes chatdots { to { background-position: 18px 0; } }
 .chat-loading > .chat-messages { flex: 1; }
+
+/* ---------- entregable 4: tablas, formulario de predicción, fórmulas ---------- */
+.dtable.wrap td { white-space: normal; }
+.dtable tr.hot-row td { color: #E4572E; font-weight: 600; }
+.dtable th[title] { text-decoration: underline dotted; text-underline-offset: 3px; }
+.pred-out { min-height: 120px; }
+.radio label input, .check label input { accent-color: var(--cyan); }
+.md-math .katex { font-size: 1.05em; }
+#pred-azar .ic, #pred-boton .ic { margin-right: 6px; }

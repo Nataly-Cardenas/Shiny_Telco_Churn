@@ -2,7 +2,10 @@
 
 BOOK <- "https://nataly-cardenas.github.io/Telco_Churn_JBook/"
 REPO <- "https://github.com/Nataly-Cardenas/Telco_Churn_JBook"
+DASH_REPO <- "https://github.com/lauraformore/Dash_Telco_Churn_ML"
 SHINY_REPO <- "https://github.com/Nataly-Cardenas/Shiny_Telco_Churn"
+VERSION <- "4.0"
+ACTUALIZADO <- "2026-11-10"
 
 # ---------------------------------------------------------------- paleta
 # Un solo color para todas las series; el segundo color solo resalta el mejor resultado, la clase de abandono
@@ -58,6 +61,34 @@ subhead <- function(title, sub = NULL) div(class = "section-head", tags$h2(title
 empty <- function() note(T("Sin clientes en este segmento"), T("Amplía los filtros para volver a calcular las visualizaciones."))
 scope <- function(d) div(class = "scope", tags$span(class = "live-dot"), paste0(" ", fmt(T("{n} clientes en la selección"), n = f0(nrow(d)))))
 
+pm <- function(m, s, d = 4) sprintf(paste0("%.", d, "f ± %.", d, "f"), m, s)
+
+# Mensaje de error o advertencia (equivale a dbc.Alert con el estilo del tablero).
+alert <- function(title, text, kind = "warning") div(class = paste("alert-dash", kind), role = "alert", tags$strong(title), tags$p(text))
+
+# Markdown con fórmulas: KaTeX las dibuja en el navegador (equivale a dcc.Markdown(mathjax=True)).
+# Las fórmulas se apartan antes de convertir el markdown para que sus _ y \\ no se lean como formato.
+md <- function(text, cls = "prose") {
+  m <- gregexpr("\\$\\$[^$]+\\$\\$|\\$[^$\n]+\\$", text)
+  math <- regmatches(text, m)[[1]]
+  keys <- sprintf("MATHX%03dX", seq_along(math))
+  if (length(math)) regmatches(text, m) <- list(keys)
+  h <- commonmark::markdown_html(text, extensions = TRUE)
+  for (i in seq_along(math)) h <- sub(keys[i], htmlEscape(math[i]), h, fixed = TRUE)
+  div(class = paste(cls, "md-math"), HTML(h))
+}
+
+# Botones de opción (dcc.RadioItems) y casilla (dcc.Checklist de una opción) que Shiny reconoce como entradas.
+radio <- function(id, values, labels, selected) {
+  div(id = id, class = "shiny-input-radiogroup radio", lapply(seq_along(values), function(i)
+    tags$label(tags$input(type = "radio", name = id, value = values[i], checked = if (values[i] == selected) NA), tags$span(paste0(" ", labels[i])))))
+}
+check <- function(id, text, value = FALSE) div(class = "check", tags$label(tags$input(id = id, type = "checkbox", checked = if (value) NA), tags$span(paste0(" ", text))))
+
+# Caja numérica (dcc.Input type = number).
+num_input <- function(id, min, max, step, value = NULL, placeholder = NULL)
+  tags$input(id = id, type = "number", class = "num-input", min = min, max = max, step = step, value = value, placeholder = placeholder)
+
 # Lista de selección (selectize) con etiquetas traducidas.
 dropdown <- function(id, values, value, labels = NULL, multi = FALSE) {
   lab <- vapply(values, function(v) if (!is.null(labels) && v %in% names(labels)) labels[[v]] else as.character(cat_name(v)), "")
@@ -90,19 +121,21 @@ tt <- function(d) {
 }
 
 # Tabla con orden, paginación y filtro en el navegador (mismo aspecto que dash_table.DataTable).
-table_ui <- function(d, page_size = 10, filter = FALSE) {
+# hot_rows: filas resaltadas (style_data_conditional del dash); tooltips: texto de ayuda por encabezado; wrap: celdas en varias líneas.
+table_ui <- function(d, page_size = 10, filter = FALSE, digits = 4, wrap = FALSE, hot_rows = integer(), tooltips = list()) {
   if (is.null(d) || !ncol(d)) return(NULL)
   cell <- function(v) {
     if (is.logical(v)) return(ifelse(is.na(v), "", ifelse(v, T("Sí"), "No")))
-    if (is.numeric(v)) return(ifelse(is.na(v), "", vapply(round(v, 4), function(x) format(x, scientific = abs(x) < 1e-4 && x != 0, digits = 15, trim = TRUE), "")))
+    if (is.numeric(v)) return(ifelse(is.na(v), "", vapply(round(v, digits), function(x) format(x, scientific = abs(x) < 1e-4 && x != 0, digits = 15, trim = TRUE), "")))
     ifelse(is.na(v), "", as.character(v))
   }
   cols <- lapply(d, cell)
   num <- vapply(d, is.numeric, TRUE)
-  body <- vapply(seq_len(nrow(d)), function(i) paste0("<tr>", paste0("<td>", htmlEscape(vapply(cols, `[`, "", i)), "</td>", collapse = ""), "</tr>"), "")
-  div(class = "dtable", `data-page-size` = page_size,
+  body <- vapply(seq_len(nrow(d)), function(i) paste0(if (i %in% hot_rows) "<tr class=\"hot-row\">" else "<tr>",
+                                                     paste0("<td>", htmlEscape(vapply(cols, `[`, "", i)), "</td>", collapse = ""), "</tr>"), "")
+  div(class = paste("dtable", if (wrap) "wrap"), `data-page-size` = page_size,
       tags$div(class = "dt-scroll", tags$table(
-        tags$thead(tags$tr(lapply(seq_along(d), function(j) tags$th(`data-num` = if (num[j]) "1" else "0", tags$span(class = "dt-sort"), names(d)[j]))),
+        tags$thead(tags$tr(lapply(seq_along(d), function(j) tags$th(`data-num` = if (num[j]) "1" else "0", title = tooltips[[names(d)[j]]], tags$span(class = "dt-sort"), names(d)[j]))),
                    if (filter) tags$tr(class = "dt-filter", lapply(seq_along(d), function(j) tags$th(tags$input(type = "text", placeholder = "filter data..."))))),
         tags$tbody(HTML(paste(body, collapse = ""))))),
       div(class = "dt-pager"))
@@ -110,7 +143,8 @@ table_ui <- function(d, page_size = 10, filter = FALSE) {
 
 # ---------------------------------------------------------------- gráficas
 style_fig <- function(p, height = 360, legend = TRUE, margin = NULL) {
-  p <- plotly_build(p)
+  # boxmode existe en plotly.js aunque el esquema de plotly para R no lo declare: solo se silencia ese aviso.
+  p <- withCallingHandlers(plotly_build(p), warning = function(w) if (grepl("boxmode", conditionMessage(w))) invokeRestart("muffleWarning"))
   L <- p$x$layout
   below <- !is.null(L$legend$y) && L$legend$y < 0          # leyenda pedida debajo de la gráfica
   margin <- margin %||% if (!is.null(L$margin$b)) L$margin  # margen propio de la figura
@@ -186,11 +220,11 @@ subplots <- function(plots, titles = NULL, nrows = 1, widths = NULL, hspace = NU
   b
 }
 
-page_head <- function(key, lead) {
-  chapter <- CHAPTER[[key]]
+# Encabezado de página con un único enlace al capítulo del Jupyter Book.
+page_head <- function(title, lead, chapter = NULL) {
   link <- if (!is.null(chapter)) tags$a(class = "chip-link", href = paste0(BOOK, chapter, ".html"), target = "_blank",
                                         icon("book", "sm"), T("Ver este capítulo en el Jupyter Book"), icon("arrow", "sm"))
-  div(class = "page-head", eyebrow("TELCO CUSTOMER CHURN"), tags$h1(T(TITLES[[key]])), tags$p(class = "lead", lead), link)
+  div(class = "page-head", eyebrow("TELCO CUSTOMER CHURN"), tags$h1(title), tags$p(class = "lead", lead), link)
 }
 
 # Pestañas: la barra se pinta aquí y el contenido de la pestaña activa lo genera el servidor (uiOutput "<id>-body").

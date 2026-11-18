@@ -1,112 +1,63 @@
 # Señal perdida · Dashboard Telco Customer Churn (Shiny)
 
-Dashboard interactivo en **R Shiny y Plotly** para explorar el proyecto de abandono de clientes de **Laura Rivera y Natalý Cárdenas**, Universidad del Norte. Es la versión en R del dashboard [Dash_Telco_Churn](https://github.com/Nataly-Cardenas/Dash_Telco_Churn): mismas secciones, gráficas, textos, colores, animaciones, asistente e idiomas.
+Dashboard predictivo en **R Shiny y Plotly** para el proyecto de abandono de clientes de **Laura S. Rivera Figueredo y Natalý A. Cárdenas Izaquita** (Universidad del Norte). Es la versión en R del dashboard [Dash_Telco_Churn_ML](https://github.com/lauraformore/Dash_Telco_Churn_ML): mismas secciones, gráficas, textos, colores, animaciones, asistente e idiomas, y los mismos **12 modelos finales del entregable 4** (11 benchmarks calibrados y el modelo propio, RegionalMAPEM) para predecir en vivo. Todo el código de la aplicación es R.
 
 ![Portada del dashboard](preview-desktop.png)
 
-- Jupyter Book: https://nataly-cardenas.github.io/Telco_Churn_JBook/
-- Fuente de los datos y resultados: https://github.com/Nataly-Cardenas/Telco_Churn_JBook
-- Versión en Python (Dash): https://github.com/Nataly-Cardenas/Dash_Telco_Churn
+- Jupyter Book: https://nataly-cardenas.github.io/Telco_Churn_JBook/ (capítulo 8: dashboard y despliegue)
+- Experimento y resultados: https://github.com/Nataly-Cardenas/Telco_Churn_JBook
+- Versión en Python (Dash): https://github.com/lauraformore/Dash_Telco_Churn_ML
+
+## Secciones
+
+| Ruta | Página | Contenido |
+|---|---|---|
+| `#contexto` | Contexto | Portada interactiva, problema con cifra citada, pregunta de investigación, objetivos, ficha y diccionario de los datos, diagrama de la metodología, marco teórico, limitaciones, ética, autoras y versión |
+| `#eda` | EDA | Filtros globales (partición, contrato, internet, antigüedad) y 9 pestañas: ETL y partición, univariado, bivariado con pruebas y Holm, explorador bivariado (ejes y color a elección), multivariado, faltantes, resumen, preparación de datos y explorador con descarga CSV |
+| `#modelos` | Modelos | Tabla de líderes ordenable y filtrable, predicción en vivo con probabilidad, conjunto conforme al 90 % y SHAP local, diagnóstico (confusión, calibración, ROC, precisión-recall), SHAP global, diagrama de diferencia crítica y 223 contrastes con Holm, modelo original (veredicto, pseudocódigo, convergencia, pruebas, robustez y pesos por región), ficha del modelo y los resultados de los entregables 2 y 3 (112 configuraciones, calibración, optimizadores, multifidelidad, eficiencia, comparación estadística, interpretabilidad, umbral y conclusiones) |
+
+Las secciones usan fragmentos de URL, así que admiten enlaces directos y los botones de atrás/adelante del navegador.
 
 ## Ejecutar
 
 Requiere R 4.1 o superior.
 
-1. Instalar los paquetes (una sola vez), desde esta carpeta en la consola de R o RStudio:
-
-   ```r
-   source("install.R")
-   ```
-
-2. Ejecutar la aplicación:
-
-   ```r
-   shiny::runApp()
-   ```
-
-   En RStudio también se puede abrir `app.R` y pulsar **Run App**. Desde una terminal: `Rscript -e "shiny::runApp(port = 8050, launch.browser = TRUE)"`.
-
-## Publicar en shinyapps.io
-
-1. Crear una cuenta en https://www.shinyapps.io y copiar el token desde *Account → Tokens*.
-2. En R:
-
-   ```r
-   install.packages("rsconnect")
-   rsconnect::setAccountInfo(name = "<cuenta>", token = "<token>", secret = "<secreto>")
-   rsconnect::deployApp()
-   ```
-
-La app no requiere base de datos ni acceso a GitHub al ejecutarse.
-
-## Recorrido
-
-Las secciones siguen los capítulos del Jupyter Book, con las mismas gráficas y tablas (animadas e interactivas), para poder explicar el proyecto desde el dashboard.
-
-- **Portada interactiva:** una red de clientes conectados a un celular 3D. Los puntos resaltados son clientes a punto de irse y se pueden retener pasando el cursor (o el dedo).
-- **Introducción:** contexto, objetivo general, objetivos específicos, marco teórico en tarjetas y descripción de variables.
-- **Análisis exploratorio:** filtros globales y pestañas numeradas en el orden del dash: ETL y partición, univariado, bivariado (pruebas, Cramér V y Holm), multivariado (Q-Q, Spearman, matriz de dispersión, KDE), valores faltantes, resumen y explorador con descarga CSV.
-- **Preprocesamiento:** pasos del pipeline, validación cruzada, ablación y evaluación del modelo base en test (matriz de confusión y ROC animada).
-- **Modelado avanzado:** podio y siete pestañas: resultados por modelo (matriz de confusión, ROC, confiabilidad y robustez entre semillas), calibración Platt frente a isotónica, optimizadores (convergencia, diversidad, costo y tamaño del efecto frente a Grid), multifidelidad (Successive Halving), eficiencia computacional (perfilamiento, implementaciones alternativas, escalamiento en n y p, paralelismo y tabla estándar frente a optimizado), comparación estadística (Friedman, Nemenyi, DeLong y tamaños del efecto) e interpretabilidad (SHAP global, waterfall y LIME).
-- **Simulador:** herramienta creada para el dash (perfil de riesgo, clientes reales del test y laboratorio de umbral).
-- **Conclusiones:** hallazgos, limitaciones, próximos pasos, reproducibilidad (con enlace al código del experimento) y enlace al paper.
-- **Autoras:** fotos, LinkedIn, GitHub y correo.
-
-Cada capítulo tiene un único enlace a su versión en el Jupyter Book, debajo del título. Las secciones usan fragmentos de URL (`#eda`, `#modelado`, etc.), así que admiten enlaces directos y los botones de atrás/adelante del navegador. El diseño se adapta a móvil y respeta `prefers-reduced-motion`.
-
-## Tamaño para proyectar
-
-Cada gráfica toma como alto máximo el espacio visible bajo la barra superior (`min(alto, 100vh − 230 px)`), así que se ve completa sin desplazarse incluso en 1280 × 720. La tipografía se mantiene legible para proyección y el menú cabe en una sola fila desde 1180 px.
-
-## Idioma, tema y paleta
-
-- **Español / inglés:** botones `ES | EN` arriba a la derecha. Las traducciones están en `data/i18n_en.json` y un test verifica que ningún texto quede sin traducir.
-- **Modo claro / oscuro:** botón de sol/luna. La elección de idioma y tema se guarda en el navegador.
-- **Íconos:** íconos de línea propios (`src/icons.R`), sin emojis.
-- **Paleta:** las gráficas usan un solo color (`#2E86AB` azul) y cambian a `#E4572E` naranja solo para resaltar el mejor resultado o la clase de interés; `#9AA5B1` gris para referencias. El título de la portada y los botones llevan un degradado azul → naranja. Un test verifica que las gráficas no usen otros colores.
-
-## Asistente: Antena
-
-El botón flotante abre a **Antena**, la asistente del dashboard. Al abrirla saluda en voz alta con una voz femenina («Hola, soy Antena, estoy aquí para resolver tus dudas. ¿En qué te puedo ayudar?»), en español o inglés según el idioma elegido. La voz es la del navegador (Web Speech API, `www/antena.js`): en Edge y Chrome para Windows suena natural; el botón del altavoz la silencia y la elección se recuerda. Es un asistente sin límite de preguntas que responde sobre el proyecto, sus datos y cada sección del dashboard, con su propia base de conocimiento (`data/faq.json`). Para preguntas sobre perfiles concretos, como «tasa de abandono de clientes con fibra y mes a mes», calcula la cifra sobre el conjunto de entrenamiento.
-
-- **Sin configuración**, responde con la base de conocimiento local (búsqueda TF-IDF por n-gramas de caracteres, la misma del dashboard de Dash).
-- **Con la variable de entorno `ANTHROPIC_API_KEY`**, redacta las respuestas con Claude (`claude-opus-5-5`) usando ese mismo contexto, y vuelve a la respuesta local si la API falla. Cada pregunta consume créditos de la API de Anthropic.
-
 ```r
-Sys.setenv(ANTHROPIC_API_KEY = "tu-clave")
+source("install.R")   # una sola vez
 shiny::runApp()
 ```
 
-En shinyapps.io la variable se define en un archivo `.Renviron` junto a `app.R` (no lo subas a GitHub).
+Desde una terminal: `Rscript -e "shiny::runApp(port = 8050, launch.browser = TRUE)"`. Para publicar en shinyapps.io: `rsconnect::deployApp()`.
 
-## Contrato de datos
+## Modelos en R
 
-- Dataset real de 7.043 clientes, 1.869 abandonos.
-- Índices históricos: 5.634 train y 1.409 test, sin solapamiento.
-- `TotalCharges` se convierte a numérico para el EDA y conserva sus 11 ausencias. La explicación del pipeline documenta su imputación determinista con cero por `tenure = 0`.
-- Los filtros superiores afectan al EDA y al explorador. **No recalculan ni reentrenan modelos publicados**.
-- Las pruebas del EDA se recalculan en R con los mismos métodos del libro (chi-cuadrado, V de Cramér, Fisher, t de Welch, Mann–Whitney, punto-biserial, K² de D'Agostino, Holm, Spearman, KDE con ancho de Scott); los tests comprueban que coinciden con las cifras del libro.
-- El simulador de perfil muestra la tasa de abandono **observada** en clientes de entrenamiento parecidos; no es una predicción del modelo.
-- La tabla de 112 configuraciones representa media y desviación de cinco folds externos de la realización 0. `unidades.csv` contiene las 1.680 unidades (112 × 3 × 5).
-- El laboratorio de umbral usa predicciones **nativas** guardadas de tres finalistas sobre el test histórico. Es didáctico: mover el umbral no valida una regla operativa.
-- El test ya había sido expuesto en la primera entrega y es evidencia suplementaria. Los contrastes por folds son exploratorios, no confirmatorios.
-- No se entrenan modelos al iniciar: predicciones OOF, SHAP y LIME vienen de los artefactos publicados.
+Los 12 artefactos del dash (`modelo.joblib` de scikit-learn, XGBoost, LightGBM y CatBoost) se convirtieron una sola vez a `artifacts/<modelo>/modelo.rds` con sus parámetros ajustados: escalado y one-hot, coeficientes, árboles, vectores de soporte, B-splines, calibradores de Platt y, para RegionalMAPEM, los cuantiles, la PCA, el GMM de regiones y los pesos por región. `src/modelos.R` reimplementa en R la inferencia de cada modelo tal como la hace su librería original (incluida la comparación en precisión simple de los árboles), así que **las probabilidades coinciden con las del experimento** (diferencia máxima < 1e-7 en los 40 clientes de `artifacts/prueba_ida_y_vuelta.csv` y en el hold-out; lo comprueba `tests/testthat/test-modelos.R`). Los `metadata.json` de cada modelo se copian sin cambios y alimentan el formulario y la ficha.
+
+- `scripts/convertir_artefactos.R` arma los `.rds` a partir de los parámetros exportados en JSON.
+- La explicación local usa **Kernel SHAP** implementado en R con los mismos 12 clientes de referencia y 100 coaliciones del dash; los valores suman exactamente `p(x) − E[p(fondo)]`. Como el muestreo de coaliciones es aleatorio, pueden diferir ligeramente de los del dash.
+- El dashboard **nunca entrena**: solo carga los artefactos una vez por proceso.
+
+## Asistente: Antena
+
+El botón flotante abre a **Antena**, que saluda en voz alta (Web Speech API, `www/antena.js`) y responde sin límite de preguntas sobre el proyecto, sus datos y cada sección, con la base de conocimiento del dash (`data/faq.json`). Para perfiles concretos («tasa de abandono con fibra y mes a mes») calcula la cifra sobre el conjunto de entrenamiento. Con la variable de entorno `ANTHROPIC_API_KEY`, redacta las respuestas con Claude (`claude-opus-5-5`) y vuelve a la respuesta local si la API falla.
+
+## Idioma, tema y paleta
+
+Botones `ES | EN` y modo claro u oscuro arriba a la derecha (se recuerdan en el navegador). Las gráficas usan `#2E86AB` para todas las series, `#E4572E` para resaltar y `#9AA5B1` para referencias; una prueba verifica que no aparezcan otros colores. Cada gráfica toma como alto máximo `min(alto, 100vh − 230 px)` para proyectar en 1280 × 720.
 
 ## Archivos
 
-- `app.R`: punto de entrada; carga los módulos de `src/` y crea la aplicación.
-- `src/app_ui.R`, `src/app_server.R`: estructura de la página y lógica del servidor.
-- `src/pages_eda.R`, `src/pages_model.R`, `src/pages_other.R`: portada y secciones con sus gráficas.
-- `src/components.R`: paleta, tarjetas, KPIs, tablas, deslizadores, pestañas y estilo común de las gráficas.
-- `src/analytics.R`, `src/eda.R`: datos, cohortes, ROC, umbral, clientes similares y pruebas estadísticas.
-- `src/pages_model_extra.R`: resultados del entregable 3 (robustez, calibración isotónica, multifidelidad, eficiencia computacional y tamaños del efecto).
-- `src/chatbot.R`: asistente (búsqueda, cálculo de perfiles y conexión opcional con Claude).
-- `src/i18n.R`, `src/icons.R`: traducción e íconos.
-- `www/style.css`, `www/shiny.css`: diseño visual, animaciones y estilos de los controles.
-- `www/antena.js`: voz y animación de Antena.
-- `www/cover.js`: red de clientes, celular 3D y contadores animados; `www/app.js`: navegación, idioma, tema, pestañas, deslizadores, tablas y asistente.
-- `data/`: CSV, interpretabilidad, traducciones y base del asistente, unos 11 MB.
-- `tests/testthat/`: integridad del split, métricas, filtros, estadísticas del EDA, artefactos del modelado, colores, traducciones, asistente y que todas las páginas se generen en ES/EN.
+- `app.R`: punto de entrada.
+- `src/app_ui.R`, `src/app_server.R`: barra, cinta, filtros, pie y lógica del servidor.
+- `src/pages_contexto.R`, `src/pages_eda.R`, `src/pages_modelos.R`: las tres secciones.
+- `src/entregable2.R`, `src/entregable2_extra.R`: resultados de los entregables 2 y 3 (pestaña *Entregable 2*).
+- `src/modelos.R`: carga de artefactos, validación del formulario, predicción y SHAP local.
+- `src/plots.R`, `src/components.R`: gráficas (gauge, ROC, calibración, diferencia crítica, cascada SHAP…), tarjetas, tablas y controles.
+- `src/analytics.R`, `src/eda.R`: datos, cohortes, resultados del experimento y pruebas estadísticas.
+- `src/chatbot.R`, `src/i18n.R`, `src/icons.R`: asistente, traducción e íconos.
+- `www/`: estilos, portada animada, navegación y voz de Antena.
+- `artifacts/`: los 12 modelos (`modelo.rds`, `metadata.json`).
+- `data/`: datos originales, resultados del experimento (`resultados/`), entregables 2 y 3, `MODEL_CARD.md` y `DATA_STATEMENT.md`.
 
 ## Verificar
 
@@ -114,4 +65,4 @@ En shinyapps.io la variable se define en un archivo `.Renviron` junto a `app.R` 
 testthat::test_dir("tests/testthat")
 ```
 
-Se comprobaron en Chromium la navegación, los filtros, las pestañas, los deslizadores, el asistente, la descarga CSV, el modo claro, el inglés y la vista móvil, comparando cada pantalla con la versión en Dash.
+Incluyen la equivalencia de los 12 modelos con el experimento, la validación de entradas, SHAP, que todas las páginas y pestañas se generen en ES/EN, las cifras del EDA, las traducciones y la paleta.

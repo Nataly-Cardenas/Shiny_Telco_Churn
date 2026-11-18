@@ -103,3 +103,22 @@ similar_customers <- function(contract, internet, payment, tenure, monthly) {
     if (nrow(s) >= 30 || w[1] == 72) return(list(s = s, w = list(tenure = w[1], monthly = w[2], payment = w[3] == 1)))
   }
 }
+
+# ---------------------------------------------------------------- resultados del experimento confirmatorio (entregable 4)
+# Tablas y JSON copiados de experiments/resultados/tablas/ (ver data/resultados/procedencia.json).
+.res_cache <- new.env()
+resultado <- function(nombre) {
+  if (is.null(.res_cache[[nombre]])) {
+    ruta <- file.path(DATA, "resultados", nombre)
+    .res_cache[[nombre]] <- if (grepl("\\.json$", nombre)) jsonlite::fromJSON(ruta, simplifyVector = TRUE)
+                            else utils::read.csv(ruta, check.names = FALSE, stringsAsFactors = FALSE)
+  }
+  .res_cache[[nombre]]
+}
+
+# Probabilidades externas: repetición 0 de la validación anidada (5634) y hold-out (1409), una columna por modelo.
+predicciones_finales <- function() resultado("predicciones.csv")
+
+telco <- function(nombre) { d <- resultado(nombre); if ("conjunto" %in% names(d)) d[d$conjunto == "telco", , drop = FALSE] else d }
+
+documento <- function(nombre) paste(readLines(file.path(DATA, nombre), encoding = "UTF-8", warn = FALSE), collapse = "\n")

@@ -6,28 +6,9 @@
 
 MODEL <- "claude-opus-5-5"
 FAQ <- jsonlite::fromJSON(file.path(DATA, "faq.json"), simplifyDataFrame = FALSE)
-SUGGESTIONS <- c(N("¿Qué clientes abandonan más?"), N("¿Cuál fue el mejor modelo?"), N("¿Qué es SMOTE y por qué se usó?"), N("¿Cómo uso el simulador?"), N("¿Cómo descargo los datos?"))
-
-SYSTEM <- paste(sep = "\n",
-  'Eres el asistente del dashboard "Señal perdida", sobre el proyecto Telco Customer Churn de Laura S. Rivera Figueredo y Natalý A. Cárdenas Izaquita (Universidad del Norte).',
-  "Respondes preguntas de cualquier visitante sobre el proyecto, sus resultados y cómo usar el dashboard.",
-  "",
-  "Hechos del proyecto:",
-  "- Datos: Telco Customer Churn de IBM, 7,043 clientes, 21 columnas, 26.5 % de abandono. Partición estratificada 80/20 (5,634 entrenamiento, 1,409 test).",
-  "- Tasas de abandono más altas: cheque electrónico 45.7 %, contrato mes a mes 42.7 %, fibra óptica 42.1 %, sin seguridad en línea 41.9 %, sin soporte técnico 41.8 %. Con contrato a dos años: 2.9 %.",
-  "- Diseño: 7 familias de modelos × 4 balanceos × 4 optimizadores = 112 configuraciones, validación cruzada anidada (5 folds externos, 3 internos), F1 de la clase de abandono como métrica principal.",
-  "- Resultados: Random Forest + SMOTE F1 0.638 ± 0.023 (AUC 0.844), XGBoost + SMOTE 0.638, regresión logística 0.634; sin diferencias estadísticamente detectables. SMOTE mejoró 6 de 7 familias. La calibración sigmoide mejoró Brier y ECE en 80 de 96 configuraciones.",
-  "- SHAP: contrato, servicio de internet y antigüedad son las variables más importantes. Las atribuciones no son causales.",
-  "- Secciones del dashboard: Portada (red de clientes y celular con clientes reales); Introducción (contexto, objetivos, marco teórico, variables);",
-  "  Análisis exploratorio (ETL y partición, univariado, bivariado, multivariado, valores faltantes, resumen, explorador con descarga CSV y filtros);",
-  "  Preprocesamiento (pipeline, imputación, validación cruzada, ablación, evaluación del modelo base en test); Modelado avanzado (podio, resultados por modelo,",
-  "  calibración, optimizadores, comparación estadística, SHAP y LIME); Simulador (perfil de riesgo, clientes reales, umbral de alerta); Conclusiones; Autoras.",
-  "  Botones ES/EN y modo claro/oscuro arriba a la derecha.",
-  "",
-  "Reglas:",
-  "- Responde en el idioma que te indiquen, en 2 a 5 frases, con markdown sencillo. Cita cifras solo si aparecen en estos hechos o en el contexto recibido.",
-  "- Si la pregunta no tiene que ver con el proyecto o el dashboard, dilo con amabilidad y sugiere qué se puede preguntar.",
-  "- Si el contexto no alcanza para responder, dilo y recomienda la sección del dashboard donde buscar.")
+EXTRA <- jsonlite::fromJSON(file.path(DATA, "chatbot_extra.json"), simplifyVector = FALSE)   # sugerencias e instrucciones del dash
+SUGGESTIONS <- unlist(EXTRA$SUGGESTIONS)
+SYSTEM <- EXTRA$SYSTEM
 
 # ---------------------------------------------------------------- búsqueda TF-IDF por n-gramas de caracteres
 # Equivale a TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4), strip_accents='unicode', lowercase=True, sublinear_tf=True).
@@ -112,8 +93,8 @@ data_answer <- function(question, lang) {
   if (!nrow(d)) return(if (lang == "en") "No training customers match that profile." else "Ningún cliente de entrenamiento tiene ese perfil.")
   n <- nrow(d); k <- sum(d$target); profile <- paste(desc, collapse = " · ")
   if (lang == "en")
-    return(sprintf("In the training set, customers with **%s** are %s; %s of them churned (**%s**), versus 26.5 %% overall. It is an observed association, not a cause. You can explore it in *Simulator → Risk profile* and *Exploratory analysis → 3 · Bivariate*.", profile, f0(n), f0(k), pct(k / n)))
-  sprintf("En el conjunto de entrenamiento, los clientes con **%s** son %s; de ellos abandonaron %s (**%s**), frente al 26.5 %% general. Es una asociación observada, no una causa. Puedes explorarlo en *Simulador → Perfil de riesgo* y en *Análisis exploratorio → 3 · Bivariado*.", profile, f0(n), f0(k), pct(k / n))
+    return(sprintf("In the training set, customers with **%s** are %s; %s of them churned (**%s**), versus 26.5 %% overall. It is an observed association, not a cause. You can explore it in *EDA → 3 · Bivariate* and *EDA → 4 · Bivariate explorer*.", profile, f0(n), f0(k), pct(k / n)))
+  sprintf("En el conjunto de entrenamiento, los clientes con **%s** son %s; de ellos abandonaron %s (**%s**), frente al 26.5 %% general. Es una asociación observada, no una causa. Puedes explorarlo en *EDA → 3 · Bivariado* y en *EDA → 4 · Explorador bivariado*.", profile, f0(n), f0(k), pct(k / n))
 }
 
 faq_text <- function(i, lang) FAQ[[i]][[if (lang == "en") "en" else "es"]]

@@ -12,18 +12,32 @@
   function qa(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function send(id, v) { if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue(id, v, { priority: 'event' }); }
 
-  /* ---------- navegación ---------- */
-  function routeKey() { var k = (location.hash || '#inicio').slice(1); return document.getElementById('nav-' + k) || k === 'inicio' ? k : 'inicio'; }
+  /* ---------- navegación: #contexto, #eda y #modelos (las rutas /, /eda y /modelos del dash) ---------- */
+  var current = 'contexto';
+  function isRoute(k) { return !!document.getElementById('nav-' + k); }
+  function routeKey() { var k = (location.hash || '#contexto').slice(1); return isRoute(k) ? k : (k && document.getElementById(k) ? current : 'contexto'); }
   function applyRoute(scroll) {
-    var key = routeKey();
+    var h = (location.hash || '').slice(1);
+    if (h && !isRoute(h) && document.getElementById(h)) {        // ancla dentro de la página (p. ej. #problema)
+      document.getElementById(h).scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
+    }
+    var key = routeKey(); current = key;
     qa('.nav-link').forEach(function (a) { a.classList.toggle('on', a.id === 'nav-' + key); });
     var f = q('#filters'); if (f) f.style.display = DATA_PAGES.indexOf(key) >= 0 ? '' : 'none';
-    var shell = q('#shell'); if (shell) shell.className = key === 'inicio' ? 'shell cover-mode' : 'shell';
-    if (titles) document.title = (titles[key] || titles.inicio) + suffix;
+    if (titles) document.title = (titles[key] || titles.contexto) + suffix;
     if (scroll) window.scrollTo({ top: 0, behavior: 'smooth' });
     if (window.Shiny && Shiny.setInputValue) Shiny.setInputValue('route', key);
   }
   window.addEventListener('hashchange', function () { applyRoute(true); });
+
+  /* ---------- fórmulas (KaTeX) ---------- */
+  function renderMath() {
+    if (!window.renderMathInElement) return;
+    qa('.md-math:not([data-math])').forEach(function (el) {
+      el.dataset.math = '1';
+      window.renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false });
+    });
+  }
 
   /* ---------- tema e idioma ---------- */
   function setTheme(t) { document.documentElement.dataset.theme = t; store.set('theme', t); }
@@ -125,7 +139,7 @@
     render();
   }
 
-  function scan() { qa('.dtable').forEach(initTable); }
+  function scan() { qa('.dtable').forEach(initTable); renderMath(); }
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
 
   /* ---------- mensajes del servidor ---------- */
@@ -139,7 +153,7 @@
     Object.keys(m.nav).forEach(function (k) { var s = document.getElementById('nav-t-' + k); if (s) s.textContent = m.nav[k]; });
     Object.keys(m.labels).forEach(function (k) { var l = document.getElementById(k); if (l) l.textContent = m.labels[k]; });
     q('#reset-t').textContent = m.reset; q('#footer-l').textContent = m.footer; q('#theme-btn').title = m.theme;
-    titles = m.titles; suffix = m.suffix; document.title = (titles[routeKey()] || titles.inicio) + suffix;
+    titles = m.titles; suffix = m.suffix; document.title = (titles[current] || titles.contexto) + suffix;
   });
   Shiny.addCustomMessageHandler('chat-texts', function (m) {
     q('#chat-quota').textContent = m.quota; q('#chat-title').textContent = m.title; q('#chat-sub').textContent = m.sub;
