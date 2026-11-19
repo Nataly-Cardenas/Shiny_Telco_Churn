@@ -2,10 +2,7 @@
 
 BOOK <- "https://nataly-cardenas.github.io/Telco_Churn_JBook/"
 REPO <- "https://github.com/Nataly-Cardenas/Telco_Churn_JBook"
-DASH_REPO <- "https://github.com/lauraformore/Dash_Telco_Churn_ML"
 SHINY_REPO <- "https://github.com/Nataly-Cardenas/Shiny_Telco_Churn"
-VERSION <- "4.0"
-ACTUALIZADO <- "2026-11-10"
 
 # ---------------------------------------------------------------- paleta
 # Un solo color para todas las series; el segundo color solo resalta el mejor resultado, la clase de abandono
@@ -79,22 +76,25 @@ md <- function(text, cls = "prose") {
 }
 
 # Botones de opción (dcc.RadioItems) y casilla (dcc.Checklist de una opción) que Shiny reconoce como entradas.
-radio <- function(id, values, labels, selected) {
-  div(id = id, class = "shiny-input-radiogroup radio", lapply(seq_along(values), function(i)
+radio <- function(id, values, labels, selected, cls = "radio") {
+  div(id = id, class = paste("shiny-input-radiogroup", cls), lapply(seq_along(values), function(i)
     tags$label(tags$input(type = "radio", name = id, value = values[i], checked = if (values[i] == selected) NA), tags$span(paste0(" ", labels[i])))))
 }
 check <- function(id, text, value = FALSE) div(class = "check", tags$label(tags$input(id = id, type = "checkbox", checked = if (value) NA), tags$span(paste0(" ", text))))
 
-# Caja numérica (dcc.Input type = number).
+# Caja numérica (dcc.Input type = number de Dash 4, con los botones − y + a los lados; app.js los hace funcionar).
 num_input <- function(id, min, max, step, value = NULL, placeholder = NULL)
-  tags$input(id = id, type = "number", class = "num-input", min = min, max = max, step = step, value = value, placeholder = placeholder)
+  div(class = "dash-input-container dash-input num-input",
+      tags$input(id = id, type = "number", class = "dash-input-element", min = min, max = max, step = step, value = value, placeholder = placeholder, autocomplete = "off"),
+      tags$button(type = "button", class = "dash-input-stepper dash-stepper-decrement", `aria-controls` = id, `aria-label` = "Decrease value", "−"),
+      tags$button(type = "button", class = "dash-input-stepper dash-stepper-increment", `aria-controls` = id, `aria-label` = "Increase value", "+"))
 
 # Lista de selección (selectize) con etiquetas traducidas.
 dropdown <- function(id, values, value, labels = NULL, multi = FALSE) {
   lab <- vapply(values, function(v) if (!is.null(labels) && v %in% names(labels)) labels[[v]] else as.character(cat_name(v)), "")
   selectizeInput(id, NULL, choices = setNames(values, lab), selected = value, multiple = multi, width = "100%",
-                 options = list(plugins = if (multi) list("remove_button") else NULL, searchField = if (multi || length(values) > 8) "label" else list(),
-                                dropdownParent = "body"))   # el menú se abre sobre todo el contenido, como el portal de Dash
+                 options = c(list(searchField = if (multi || length(values) > 8) "label" else list(), dropdownParent = "body"),   # el menú se abre sobre todo el contenido, como el portal de Dash
+                             if (multi) list(items = as.list(value))))   # varias opciones: en el orden elegido, como el value de Dash
 }
 
 # Deslizador con marcas y caja numérica (mismo aspecto que dcc.Slider / dcc.RangeSlider de Dash 4).
@@ -122,23 +122,42 @@ tt <- function(d) {
 
 # Tabla con orden, paginación y filtro en el navegador (mismo aspecto que dash_table.DataTable).
 # hot_rows: filas resaltadas (style_data_conditional del dash); tooltips: texto de ayuda por encabezado; wrap: celdas en varias líneas.
-table_ui <- function(d, page_size = 10, filter = FALSE, digits = 4, wrap = FALSE, hot_rows = integer(), tooltips = list()) {
+# Número como lo escribe el DataTable de Dash (String(x) de JavaScript): notación científica solo por debajo de 1e-6.
+js_num <- function(x) {
+  if (is.na(x)) return("")
+  if (x != 0 && abs(x) < 1e-6) { e <- floor(log10(abs(x))); m <- signif(x / 10^e, 15); return(paste0(format(m, digits = 15, trim = TRUE), "e", e)) }
+  format(x, scientific = FALSE, digits = 15, trim = TRUE)
+}
+
+# Íconos del paginador del DataTable de Dash (Font Awesome: angle-double-left, angle-left, angle-right, angle-double-right).
+PAGER_ICONS <- div(class = "dt-icons", hidden = NA, lapply(list(c("dl", 448, "M223.7 239l136-136c9.4-9.4 24.6-9.4 33.9 0l22.6 22.6c9.4 9.4 9.4 24.6 0 33.9L319.9 256l96.4 96.4c9.4 9.4 9.4 24.6 0 33.9L393.7 409c-9.4 9.4-24.6 9.4-33.9 0l-136-136c-9.5-9.4-9.5-24.6-.1-34zm-192 34l136 136c9.4 9.4 24.6 9.4 33.9 0l22.6-22.6c9.4-9.4 9.4-24.6 0-33.9L127.9 256l96.4-96.4c9.4-9.4 9.4-24.6 0-33.9L201.7 103c-9.4-9.4-24.6-9.4-33.9 0l-136 136c-9.5 9.4-9.5 24.6-.1 34z"), c("l", 256, "M31.7 239l136-136c9.4-9.4 24.6-9.4 33.9 0l22.6 22.6c9.4 9.4 9.4 24.6 0 33.9L127.9 256l96.4 96.4c9.4 9.4 9.4 24.6 0 33.9L201.7 409c-9.4 9.4-24.6 9.4-33.9 0l-136-136c-9.5-9.4-9.5-24.6-.1-34z"),
+                                                                c("r", 256, "M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z"), c("dr", 448, "M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34zm192-34l-136-136c-9.4-9.4-24.6-9.4-33.9 0l-22.6 22.6c-9.4 9.4-9.4 24.6 0 33.9l96.4 96.4-96.4 96.4c-9.4 9.4-9.4 24.6 0 33.9l22.6 22.6c9.4 9.4 24.6 9.4 33.9 0l136-136c9.4-9.2 9.4-24.4 0-33.8z")), function(i)
+  tags$span(`data-k` = i[1], HTML(sprintf('<svg aria-hidden="true" focusable="false" class="svg-inline--fa" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %s 512"><path fill="currentColor" d="%s"></path></svg>', i[2], i[3])))))
+
+# Ícono de orden del DataTable de Dash (fa-sort); cada mitad se apaga según la dirección del orden.
+SORT_ICON <- tags$span(class = "dt-sort", HTML(paste0('<svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">',
+  '<path class="dn" fill="currentColor" d="M41 288h238c21.4 0 32.1 25.9 17 41L177 448c-9.4 9.4-24.6 9.4-33.9 0L24 329c-15.1-15.1-4.4-41 17-41z"></path>',
+  '<path class="up" fill="currentColor" d="M296 183L177 64c-9.4-9.4-24.6-9.4-33.9 0L24 183c-15.1 15.1-4.4 41 17 41h238c21.4 0 32.1-25.9 17-41z"></path></svg>')))
+
+# head_wrap: encabezados en varias líneas (la tabla de src/ui.py del dash, usada en «Modelos finales»).
+table_ui <- function(d, page_size = 10, filter = FALSE, digits = 4, wrap = FALSE, hot_rows = integer(), tooltips = list(), head_wrap = FALSE) {
   if (is.null(d) || !ncol(d)) return(NULL)
   cell <- function(v) {
     if (is.logical(v)) return(ifelse(is.na(v), "", ifelse(v, T("Sí"), "No")))
-    if (is.numeric(v)) return(ifelse(is.na(v), "", vapply(round(v, digits), function(x) format(x, scientific = abs(x) < 1e-4 && x != 0, digits = 15, trim = TRUE), "")))
+    if (is.numeric(v)) return(ifelse(is.na(v), "", vapply(round(v, digits), js_num, "")))
     ifelse(is.na(v), "", as.character(v))
   }
   cols <- lapply(d, cell)
   num <- vapply(d, is.numeric, TRUE)
   body <- vapply(seq_len(nrow(d)), function(i) paste0(if (i %in% hot_rows) "<tr class=\"hot-row\">" else "<tr>",
                                                      paste0("<td>", htmlEscape(vapply(cols, `[`, "", i)), "</td>", collapse = ""), "</tr>"), "")
-  div(class = paste("dtable", if (wrap) "wrap"), `data-page-size` = page_size,
+  div(class = paste("dtable", if (wrap) "wrap", if (head_wrap) "hwrap"), `data-page-size` = page_size,
       tags$div(class = "dt-scroll", tags$table(
-        tags$thead(tags$tr(lapply(seq_along(d), function(j) tags$th(`data-num` = if (num[j]) "1" else "0", title = tooltips[[names(d)[j]]], tags$span(class = "dt-sort"), names(d)[j]))),
-                   if (filter) tags$tr(class = "dt-filter", lapply(seq_along(d), function(j) tags$th(tags$input(type = "text", placeholder = "filter data..."))))),
+        tags$thead(tags$tr(lapply(seq_along(d), function(j) tags$th(`data-num` = if (num[j]) "1" else "0", title = tooltips[[names(d)[j]]], div(class = "th-in", SORT_ICON, tags$span(class = "dt-name", names(d)[j]))))),
+                   if (filter) tags$tr(class = "dt-filter", lapply(seq_along(d), function(j) tags$th(div(tags$input(type = "text", placeholder = "filter data..."),
+                                                                                                  tags$input(type = "button", class = "dash-filter--case", title = "Toggle filter case sensitivity", value = "Aa")))))),
         tags$tbody(HTML(paste(body, collapse = ""))))),
-      div(class = "dt-pager"))
+      PAGER_ICONS, div(class = "dt-pager"))
 }
 
 # ---------------------------------------------------------------- gráficas
@@ -220,8 +239,10 @@ subplots <- function(plots, titles = NULL, nrows = 1, widths = NULL, hspace = NU
   b
 }
 
-# Encabezado de página con un único enlace al capítulo del Jupyter Book.
-page_head <- function(title, lead, chapter = NULL) {
+# Encabezado de página con un único enlace al capítulo del Jupyter Book. key es la ruta (título de TITLES)
+# o, como en la sección «Modelos finales» del dash, el título ya traducido con su capítulo.
+page_head <- function(key, lead, chapter = CHAPTER[[key]]) {
+  title <- if (!is.null(TITLES[[key]])) T(TITLES[[key]]) else key
   link <- if (!is.null(chapter)) tags$a(class = "chip-link", href = paste0(BOOK, chapter, ".html"), target = "_blank",
                                         icon("book", "sm"), T("Ver este capítulo en el Jupyter Book"), icon("arrow", "sm"))
   div(class = "page-head", eyebrow("TELCO CUSTOMER CHURN"), tags$h1(title), tags$p(class = "lead", lead), link)

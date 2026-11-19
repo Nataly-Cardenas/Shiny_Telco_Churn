@@ -16,7 +16,7 @@ SERVICE <- c("OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport"
 NOMBRES <- c(RegionalMAPEM = "RegionalMAPEM (modelo propio)", knn = "KNN", naive_bayes = "Naive Bayes", logistic = "Regresión logística",
              decision_tree = "Árbol de decisión", random_forest = "Random Forest", xgboost = "XGBoost", svm = "SVM RBF",
              logistic_splines = "Logística con splines", hist_gb = "HistGradientBoosting", lightgbm = "LightGBM", catboost = "CatBoost")
-SHAP_FONDO <- 12; SHAP_COALICIONES <- 100   # explicación en vivo: 12 clientes de referencia y 100 coaliciones
+SHAP_FONDO <- 12; SHAP_COALICIONES <- 100; SHAP_VARIABLES <- 10   # explicación en vivo: 12 clientes de referencia, 100 coaliciones y 10 variables (shap 0.48)
 EPS <- 1e-6
 
 .modelos <- new.env()
@@ -234,7 +234,7 @@ fondo_shap <- function() {
 # restricción de eficiencia (los valores suman f(x) − E[f(fondo)]).
 shap_local <- function(modelo, X, fondo = fondo_shap(), coaliciones = SHAP_COALICIONES, semilla = 0) {
   X <- X[ENTRADA]; X$TotalCharges <- suppressWarnings(as.numeric(X$TotalCharges)); X$TotalCharges[is.na(X$TotalCharges)] <- 0
-  M <- length(ENTRADA); set.seed(semilla)
+  M <- length(ENTRADA); np <- numpy_rng(semilla)   # mismo generador y semilla que np.random.seed(0) en el dash
   fx <- predecir(modelo, X); base <- mean(predecir(modelo, fondo))
   varying <- which(vapply(ENTRADA, function(c) any(fondo[[c]] != X[[c]]), TRUE))
   phi <- setNames(numeric(M), ENTRADA)
@@ -260,11 +260,11 @@ shap_local <- function(modelo, X, fondo = fondo_shap(), coaliciones = SHAP_COALI
   nfixed <- length(weights); left <- coaliciones - nfixed
   if (full < nsub && left > 0) {   # muestreo del resto de tamaños con el peso del kernel
     rw <- wvec; rw[seq_len(npaired)] <- rw[seq_len(npaired)] / 2; rw <- rw[(full + 1):nsub]; rw <- rw / sum(rw)
-    sizes <- sample.int(length(rw), 4 * left, replace = TRUE, prob = rw) + full
+    sizes <- np$choice(rw, 4 * left) + full
     used <- new.env(); pos <- 0
     while (left > 0 && pos < length(sizes)) {
       pos <- pos + 1; s <- sizes[pos]
-      mk <- rep(FALSE, m); mk[sample.int(m)[seq_len(s)]] <- TRUE
+      mk <- rep(FALSE, m); mk[np$permutation(m)[seq_len(s)]] <- TRUE
       key <- paste(which(mk), collapse = ","); new <- is.null(used[[key]])
       if (new) { used[[key]] <- length(weights) + 1; left <- left - 1; add(mk, 1) } else weights[used[[key]]] <- weights[used[[key]]] + 1
       if (left > 0 && s <= npaired) {
@@ -279,13 +279,70 @@ shap_local <- function(modelo, X, fondo = fondo_shap(), coaliciones = SHAP_COALI
   big <- fondo[rep(seq_len(n), nrow(S)), , drop = FALSE]
   for (j in seq_len(m)) { on <- rep(S[, j], each = n); big[[ENTRADA[varying[j]]]][on] <- X[[ENTRADA[varying[j]]]] }
   ey <- colMeans(matrix(predecir(modelo, big), n))
-  # regresión ponderada con restricción: se elimina la última variable
-  y <- ey - base; Sm <- S * 1; last <- Sm[, m]
-  A <- Sm[, -m, drop = FALSE] - last; b <- y - last * (fx - base)
-  W <- weights
-  coef <- tryCatch(solve(crossprod(A, A * W), crossprod(A, b * W)), error = function(e) MASS_ginv(crossprod(A, A * W)) %*% crossprod(A, b * W))
-  v <- c(drop(coef), (fx - base) - sum(coef))
+  # Selección de variables de shap 0.48 (l1_reg = "num_features(10)"): LARS sobre el problema aumentado elige las 10
+  # variables que entran primero; el resto queda en cero.
+  y <- ey - base; Sm <- S * 1; W <- weights; dfx <- fx - base
+  sel <- seq_len(m)
+  if (m > SHAP_VARIABLES) {
+    k <- rowSums(Sm); w_aug <- c(W * (m - k), W * k); ws <- sqrt(w_aug)
+    sel <- lar_orden(rbind(Sm, Sm - 1) * ws, c(y, y - dfx) * ws, SHAP_VARIABLES)
+  }
+  # regresión ponderada con restricción: se elimina la última variable elegida
+  last <- Sm[, sel[length(sel)]]
+  A <- Sm[, sel[-length(sel)], drop = FALSE] - last; b <- y - last * dfx
+  coef <- if (ncol(A)) tryCatch(solve(crossprod(A, A * W), crossprod(A, b * W)), error = function(e) MASS_ginv(crossprod(A, A * W)) %*% crossprod(A, b * W)) else numeric()
+  v <- numeric(m); v[sel] <- c(drop(coef), dfx - sum(coef))
   phi[varying] <- v
   list(valores = phi, base = base)
+}
+
+# Generador aleatorio heredado de numpy (np.random.seed, choice con probabilidades y permutation) para que el muestreo
+# de coaliciones sea el mismo que hace shap en el dash. numpy y R usan el mismo Mersenne Twister (MT19937): basta con
+# iniciar el estado como numpy (init_genrand) y leer de R los enteros de 32 bits que produce.
+numpy_rng <- function(seed) {
+  mul32 <- function(a, b) {   # (a * b) mod 2^32 sin perder precisión
+    ah <- a %/% 65536; al <- a %% 65536
+    ((ah * b %% 65536) * 65536 + al * b) %% 4294967296
+  }
+  xor32 <- function(a, b) {
+    hi <- bitwXor(as.integer(a %/% 65536), as.integer(b %/% 65536)); lo <- bitwXor(as.integer(a %% 65536), as.integer(b %% 65536))
+    hi * 65536 + lo
+  }
+  st <- numeric(624); x <- seed %% 4294967296
+  for (i in seq_len(624)) { st[i] <- x; x <- (mul32(xor32(x, x %/% 1073741824), 1812433253) + i) %% 4294967296 }
+  old <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", envir = globalenv()) else NULL
+  # .Random.seed[1] = 10403 elige Mersenne Twister; 624 obliga a regenerar el bloque, como numpy tras sembrar.
+  assign(".Random.seed", c(10403L, 624L, as.integer(ifelse(st >= 2147483648, st - 4294967296, st))), envir = globalenv())
+  buf <- round(stats::runif(40000) * 4294967296)   # enteros de 32 bits, en el orden en que numpy los pediría
+  if (is.null(old)) rm(".Random.seed", envir = globalenv()) else assign(".Random.seed", old, envir = globalenv())   # el resto de la app no se entera
+  pos <- 0
+  u32 <- function(n = 1) { v <- buf[pos + seq_len(n)]; pos <<- pos + n; v }
+  random_sample <- function(n) { v <- matrix(u32(2 * n), 2); ((v[1, ] %/% 32) * 67108864 + v[2, ] %/% 64) / 9007199254740992 }
+  interval <- function(mx) {   # random_interval de numpy: máscara de bits y rechazo
+    if (mx == 0) return(0)
+    mask <- 2^ceiling(log2(mx + 1)) - 1
+    repeat { v <- u32() %% (mask + 1); if (v <= mx) return(v) }
+  }
+  list(
+    choice = function(p, n) { cdf <- cumsum(p); cdf <- cdf / cdf[length(cdf)]; findInterval(random_sample(n), cdf) + 1 },   # searchsorted(side = "right") + 1
+    permutation = function(m) { a <- seq_len(m); for (i in (m - 1):1) { j <- interval(i); t <- a[i + 1]; a[i + 1] <- a[j + 1]; a[j + 1] <- t }; a }
+  )
+}
+
+# Orden de entrada de las variables en LARS (sklearn.linear_model.lars_path, method = "lar", sin centrar ni escalar).
+lar_orden <- function(X, y, k) {
+  p <- ncol(X); cvec <- drop(crossprod(X, y)); active <- which.max(abs(cvec)); mu <- 0
+  while (length(active) < min(k, p)) {
+    cvec <- drop(crossprod(X, y - mu)); C <- max(abs(cvec[active])); sg <- sign(cvec[active])
+    XA <- X[, active, drop = FALSE] * rep(sg, each = nrow(X))
+    g1 <- tryCatch(solve(crossprod(XA), rep(1, length(active))), error = function(e) MASS_ginv(crossprod(XA)) %*% rep(1, length(active)))
+    AA <- 1 / sqrt(sum(g1)); u <- drop(XA %*% (AA * g1)); a <- drop(crossprod(X, u))
+    inact <- setdiff(seq_len(p), active)
+    g <- c((C - cvec[inact]) / (AA - a[inact]), (C + cvec[inact]) / (AA + a[inact]))
+    g[!is.finite(g) | g <= 1e-12] <- Inf
+    if (all(is.infinite(g))) break
+    i <- which.min(g); mu <- mu + g[i] * u; active <- c(active, rep(inact, 2)[i])
+  }
+  active
 }
 MASS_ginv <- function(A) { s <- svd(A); d <- ifelse(s$d > 1e-10 * max(s$d), 1 / s$d, 0); s$v %*% (d * t(s$u)) }

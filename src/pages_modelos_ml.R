@@ -1,5 +1,5 @@
-# Sección 3 · Modelos: tabla de líderes, predicción en vivo con SHAP, diagnóstico, interpretabilidad global, comparación
-# estadística, modelo original, ficha del modelo y resultados del entregable 2 (pages/modelos.py del dash).
+# Sección «Modelos finales» (modelos_ml.py del dash): tabla de líderes, predicción en vivo con SHAP, diagnóstico,
+# interpretabilidad global, comparación estadística, modelo original y ficha del modelo.
 # Solo carga artefactos ya entrenados (artifacts/): nunca entrena.
 
 MEJOR <- "logistic_splines"
@@ -11,15 +11,18 @@ CORTO <- c(RegionalMAPEM = "RegionalMAPEM", logistic_splines = "Splines", hist_g
            mapem_K1 = "K = 1", mapem_regiones_duras = "Duras", promedio_simple = "Promedio", stacking_logistico = "Stacking")
 ALFA <- .10
 MODELOS_TABS <- c(N("Tabla de líderes"), N("Predicción en vivo"), N("Diagnóstico"), N("Interpretabilidad global"), N("Comparación estadística"),
-                  N("Modelo original"), N("Ficha del modelo"), N("Entregable 2"))
+                  N("Modelo original"), N("Ficha del modelo"))
+
+# Tablas de esta sección: encabezados en varias líneas, como la tabla de src/ui.py del dash.
+tabla <- function(...) table_ui(..., head_wrap = TRUE)
 
 nombre <- function(m) T(ifelse(m %in% names(NOMBRES_M), NOMBRES_M[m], m))
 corto <- function(m) T(ifelse(m %in% names(CORTO), CORTO[m], m))
 model_choices <- function() setNames(as.list(nombre(MODELOS)), MODELOS)
 
-modelos_page <- function(tab = 0) {
+modelos_ml <- function(tab = 0) {
   v <- resultado("veredicto_R3.json")
-  tagList(page_head(T("Modelos"), T("Doce modelos finales reentrenados con los 5634 clientes de desarrollo: once benchmarks calibrados y RegionalMAPEM, el modelo propio."), "06_validacion"),
+  tagList(page_head(T("Modelos finales"), T("Doce modelos finales reentrenados con los 5634 clientes de desarrollo: once benchmarks calibrados y RegionalMAPEM, el modelo propio."), "06_validacion"),
           kpis(kpi(T("LOG-LOSS DEL MODELO PROPIO"), round(v$log_loss_original, 5), T("validación anidada 5 × 5"), "hot", 5),
                kpi(T("MEJOR BENCHMARK"), round(v$log_loss_mejor_benchmark, 5), T("logística con splines"), "", 5),
                kpi(T("DIFERENCIA"), sprintf("%+.5f", v$diferencia), T("no significativa con ninguna prueba")),
@@ -29,7 +32,7 @@ modelos_page <- function(tab = 0) {
 
 modelos_tab <- function(i, input) {
   keep <- function(id, default) isolate(input[[id]]) %||% default
-  body <- switch(i + 1, leaderboard(keep), prediccion(keep), diagnostico(keep), interpretabilidad(keep), comparacion(), original(), ficha(), entregable2(keep))
+  body <- switch(i + 1, leaderboard(keep), prediccion(keep), diagnostico(keep), interpretabilidad(keep), comparacion(), original(), ficha())
   tab_body(body)
 }
 
@@ -57,7 +60,7 @@ tabla_lideres <- function(incluir_ablacion = FALSE) {
                 c("#", T("Modelo"), T("Tipo"), T("Balanceo"), T("Optimizador"), T("Calibración"), T("Log-loss (media ± DE)"), T("Log-loss"), T("IC 95 % log-loss"),
                   T("F1 (media ± DE)"), "F1", T("AUC (media ± DE)"), "AUC", "Brier", "ECE", T("Log-loss hold-out"), T("ms por cliente"), T("Tamaño (MB)")))
   tips <- setNames(list(T("Intervalo t sobre las 25 evaluaciones externas"), T("Predicción de un lote de 200 clientes, en milisegundos por cliente")), c(T("IC 95 % log-loss"), T("ms por cliente")))
-  table_ui(t, page_size = 17, filter = TRUE, hot_rows = which(d$id == ORIGINAL), tooltips = tips)
+  tabla(t, page_size = 17, filter = TRUE, digits = 5, hot_rows = which(d$id == ORIGINAL), tooltips = tips)
 }
 
 leaderboard <- function(keep) {
@@ -74,8 +77,9 @@ leaderboard <- function(keep) {
                                                "La tabla resume las 25 evaluaciones externas (5 repeticiones × 5 pliegues); el modelo propio está resaltado. Ordena o filtra cualquier columna."))),
           card(check("lideres-ablacion", T("Incluir la ablación y los combinadores estándar"), isTRUE(keep("lideres-ablacion", FALSE))), uiOutput("lideres-tabla")),
           chart(T("Log-loss externo con su intervalo de confianza"), f, T("Los intervalos de los cinco primeros se solapan casi por completo: RegionalMAPEM (resaltado) y la logística con splines empatan."), 480, FALSE),
-          subhead(T("Mejor combinación de cada modelo base del entregable 2"), T("Selección del bloque B sobre las 112 configuraciones (7 modelos × 4 balanceos × 4 optimizadores), por F1 medio externo.")),
-          card(table_ui(tb, page_size = 7), tags$p(class = "insight", fmt(T("Finalista Nemenyi: su rango medio está a menos de una diferencia crítica ({cd}) del mejor. Las siete mejores combinaciones quedan dentro del grupo de no rechazo."), cd = sprintf("%.1f", cd)))))
+          subhead(T("Mejor combinación de cada modelo base"), T("Selección sobre las 112 configuraciones (7 modelos × 4 balanceos × 4 optimizadores), por F1 medio externo.")),
+          card(tabla(tb, page_size = 7), tags$p(class = "insight", fmt(T("Finalista Nemenyi: su rango medio está a menos de una diferencia crítica ({cd}) del mejor. Las siete mejores combinaciones quedan dentro del grupo de no rechazo."), cd = sprintf("%.1f", cd))),
+               tags$p(class = "muted", T("Los modelos de la predicción en vivo son versiones re-optimizadas sin balanceo, con el log-loss como criterio; por eso no coinciden con estas combinaciones, que se muestran como referencia de la comparación previa."))))
 }
 
 # ---------------------------------------------------------------- predicción en vivo
@@ -112,7 +116,7 @@ prediccion <- function(keep) {
   ejemplos <- setNames(as.list(as.character(TEST_IDS)), paste(h$customerID, "·", ifelse(h$target == 1, T("abandonó"), T("permaneció"))))
   fila <- as.integer(keep("pred-ejemplo", EJEMPLO())); val <- cliente_valores(fila)
   form <- lapply(GRUPOS_FORM, function(g) div(class = "form-group", tags$h4(T(g[[1]])),
-    div(class = "form-grid", lapply(g[[2]], function(c) field(paste(label(c), "·", c), control(c, keep(paste0("in-", c), val[[c]])))))))
+    div(class = "g-3 row", lapply(g[[2]], function(c) div(class = "col-xl-4 col-md-6 col-12", field(paste(label(c), "·", c), control(c, keep(paste0("in-", c), val[[c]]))))))))
   tagList(div(class = "pred-layout",
       card(cls = "controls-card",
            div(class = "controls",
@@ -122,6 +126,10 @@ prediccion <- function(keep) {
                tags$button(id = "pred-azar", type = "button", class = "btn ghost action-button", icon("shuffle"), T("Cliente al azar"))),
            tags$p(class = "muted", T("El formulario se genera con el esquema de entrada guardado en metadata.json: tipos, categorías válidas y rangos observados en el desarrollo. Puedes editar cualquier campo.")),
            form,
+           div(class = "controls",
+               field(T("Umbral de alerta"), radio("pred-umbral-modo", c("f1", "custom"), c(T("El que maximiza el F1 en validación"), T("Personalizado")), keep("pred-umbral-modo", "f1"), "radio-row")),
+               field(T("Valor del umbral personalizado"), slider("pred-umbral", .05, .95, .01, keep("pred-umbral", .5), c(`0.1` = "0.10", `0.3` = "0.30", `0.5` = "0.50", `0.7` = "0.70", `0.9` = "0.90")))),
+           tags$p(class = "muted", T("Bajar el umbral detecta más clientes en riesgo pero dispara más falsas alertas. Elegirlo bien requiere conocer el costo de cada contacto y de cada cliente perdido.")),
            div(class = "export-row", tags$button(id = "pred-boton", type = "button", class = "btn primary action-button", icon("target"), T("Predecir")),
                tags$small(class = "muted", T("La explicación SHAP tarda unos segundos para RegionalMAPEM: combina a 11 modelos.")))),
       div(class = "pred-out", uiOutput("pred-salida"))),
@@ -139,25 +147,25 @@ explicar <- function(modelo, X) {
   .shap_cache[[key]]
 }
 
-prediccion_salida <- function(modelo, entrada) {
+prediccion_salida <- function(modelo, entrada, modo = "f1", umbral = .5) {
   if (identical(entrada$tenure, 0L) && is.null(entrada$TotalCharges)) entrada$TotalCharges <- 0
   X <- tryCatch(validar(entrada), entrada_invalida = function(e) e)
   if (inherits(X, "entrada_invalida")) return(alert(T("Revisa los datos del cliente"), conditionMessage(X), "warning"))
   res <- tryCatch({ p <- predecir(modelo, X); list(p = p, e = explicar(modelo, X)) },
                   error = function(e) e)   # un error del modelo no debe detener la aplicación
   if (inherits(res, "error")) return(alert(T("No se pudo calcular la predicción"), paste0(class(res)[1], ": ", conditionMessage(res)), "danger"))
-  p <- res$p; ex <- res$e; meta <- metadata(modelo); u <- meta$umbral_f1; cf <- conforme(modelo)
+  p <- res$p; ex <- res$e; meta <- metadata(modelo); u <- if (identical(modo, "custom") && !is.null(umbral)) umbral else meta$umbral_f1; cf <- conforme(modelo)
   conjunto <- c(if (1 - p <= cf$q) T("Abandona"), if (p <= cf$q) T("Permanece"))
   nivel <- if (p >= u) HOT else BASE
   etiqueta <- function(c) { v <- X[[c]]; paste(label(c), "=", if (is.character(v)) cat_name(v) else format(v)) }
   fw <- shap_waterfall(ex$valores, ex$base, etiqueta)
   out <- tagList(
     kpis(kpi(T("PROBABILIDAD DE ABANDONO"), round(p * 100, 1), nombre(modelo), if (p >= u) "hot" else "", 1, " %"),
-         kpi(T("DECISIÓN"), if (p >= u) T("Alerta de retención") else T("Sin alerta"), fmt(T("umbral F1 = {u}"), u = sprintf("%.3f", u))),
+         kpi(T("DECISIÓN"), if (p >= u) T("Alerta de retención") else T("Sin alerta"), fmt(if (identical(modo, "custom")) T("umbral personalizado = {u}") else T("umbral F1 = {u}"), u = sprintf("%.3f", u))),
          kpi(T("CONJUNTO CONFORME 90 %"), if (length(conjunto)) paste(conjunto, collapse = " + ") else "∅", fmt(T("cobertura en hold-out: {c}"), c = pct(cf$cobertura))),
          kpi(T("SHAP CALCULADO EN"), sprintf("%.1f s", ex$seg), fmt(T("{n} clientes de referencia"), n = SHAP_FONDO))),
     grid(card(tags$h3(class = "chart-title", T("Probabilidad predicha")), graph(gauge(p, nombre(modelo), nivel), 260, FALSE, list(l = 34, r = 34, t = 50, b = 10)),
-              tags$p(class = "insight", fmt(T("La aguja es la probabilidad calibrada. Con el umbral que maximiza el F1 en validación ({u}), este cliente {d}."), u = sprintf("%.2f", u),
+              tags$p(class = "insight", fmt(T("La aguja es la probabilidad calibrada. Con el umbral de alerta ({u}), este cliente {d}."), u = sprintf("%.2f", u),
                                             d = if (p >= u) T("recibe una alerta") else T("no recibe alerta")))),
          card(tags$h3(class = "chart-title", T("Incertidumbre: predicción conforme")),
               tags$p(fmt(T(paste0("Con cobertura nominal del 90 %, el conjunto de predicción contiene las clases cuya puntuación de no conformidad no supera q = {q}. ",
@@ -260,7 +268,7 @@ comparacion <- function() {
                                                                                     "RegionalMAPEM (resaltado) comparte grupo con la logística con splines, LightGBM, HistGradientBoosting y su propia ablación.")), 520, FALSE),
           card(tags$h3(class = "chart-title", T("Familia confirmatoria de contrastes")),
                tags$p(class = "muted", T("Las 223 comparaciones pre-registradas del modelo propio contra cada rival, con p ajustado por Holm sobre toda la familia. Filtra por bloque, prueba o rival.")),
-               table_ui(vista, page_size = 12, filter = TRUE, digits = 5),
+               tabla(vista, page_size = 12, filter = TRUE, digits = 5),
                tags$p(class = "insight", T("Contra la logística con splines en Telco: p Holm = 1 en las tres pruebas y δ de Cliff = −0,008, muy por debajo del umbral de 0,147."))))
 }
 
@@ -333,11 +341,11 @@ original <- function() {
     grid(chart(T("Convergencia del MAP-EM · modelo final"), fc, fmt(T("La log-posterior nunca baja y se estabiliza tras {n} iteraciones (K = {k}, c = {c}, covarianza {cov})."),
                                                                   n = conv$n_iter, k = conv$params$K, c = sprintf("%.2f", conv$params$c), cov = conv$params$covarianza), 340, FALSE),
          chart(T("Curva de la búsqueda de hiperparámetros"), fs, T("Mejor log-loss interno acumulado en las 30 evaluaciones de la búsqueda final (5634 clientes)."), 340)),
-    card(tags$h3(class = "chart-title", T("Pruebas de hipótesis frente a la logística con splines")), table_ui(pruebas, page_size = 8, digits = 5, wrap = TRUE),
+    card(tags$h3(class = "chart-title", T("Pruebas de hipótesis frente a la logística con splines")), tabla(pruebas, page_size = 8, digits = 5, wrap = TRUE),
          tags$p(class = "insight", T("Ninguna prueba rechaza H0 tras Holm. El McNemar del hold-out (F1) tiene p crudo bajo, pero no sobrevive a la corrección."))),
     subhead(T("Resumen de los estudios de robustez"), T("Repetición 0, cinco pliegues externos; detalle completo en el capítulo 7 del libro.")),
     grid(chart(T("Estabilidad por semilla"), fb, T("La logística con splines no depende de la semilla; RegionalMAPEM cambia menos de 0,0005 entre semillas, muy por debajo de la variación entre pliegues."), 360, FALSE),
-         card(tags$h3(class = "chart-title", T("Ruido, atípicos y tamaño de muestra")), table_ui(resumen, page_size = 10),
+         card(tags$h3(class = "chart-title", T("Ruido, atípicos y tamaño de muestra")), tabla(resumen, page_size = 10),
               tags$p(class = "insight", T("Diferencia negativa: el modelo propio tiene menor log-loss. Ninguna diferencia pasa de 0,003 y el signo cambia entre escenarios.")))),
     chart(T("Pesos por región · repetición 0, pliegue 0"), fw, T("Cada fila es una región. Los pesos cambian entre regiones (HistGradientBoosting va de 0,24 a 0,54), pero el modelo con pesos globales (K = 1) logra el mismo log-loss: en Telco las regiones no aportan."), 300, FALSE))
 }
@@ -351,7 +359,7 @@ ficha <- function() {
                          paste(meta$versiones$`scikit-learn`, "·", meta$versiones$numpy, "·", meta$versiones$pandas), paste(meta$costo$tamano_mb, "MB +", T("11 expertos")),
                          paste0(substr(meta$verificacion$sha256, 1, 16), "…"))), c(T("Campo"), T("Valor")))
   grid(card(cls = "model-card", md(documento("MODEL_CARD.md"))),
-       div(card(tags$h3(class = "chart-title", T("Artefacto cargado")), table_ui(filas, page_size = 10, wrap = TRUE),
+       div(card(tags$h3(class = "chart-title", T("Artefacto cargado")), tabla(filas, page_size = 10, wrap = TRUE),
                 div(class = "author-links", lapply(c(ORIGINAL, MEJOR), function(m) tags$a(class = "chip-link", href = sprintf("artifacts/%s/metadata.json", m), target = "_blank", icon("download"), "metadata.json")))),
            note(T("Usos no recomendados"), T("Decidir de forma automática sobre un cliente sin revisión humana, explicar causas del abandono o aplicarlo a otra población sin volver a validarlo."), "amber")))
 }

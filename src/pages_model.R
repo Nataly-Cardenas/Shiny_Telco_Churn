@@ -1,5 +1,4 @@
-# Resultados de los entregables 2 y 3 (112 configuraciones): se conservan como pestaña de la sección Modelos (src/entregable2.py del dash).
-# Corresponden al capítulo MODELADO_AVANZADO del Jupyter Book. Usan predicciones y tablas guardadas; no cargan modelos.
+# 3. Preprocesamiento y 4. Modelado avanzado.
 
 cache <- new.env()
 cached <- function(key, expr) { if (is.null(cache[[key]])) cache[[key]] <- expr; cache[[key]] }
@@ -23,10 +22,70 @@ pretty <- function(feature) vapply(feature, function(f) {
   name
 }, "", USE.NAMES = FALSE)
 
+# roc_animation y conf_heat están en plots.R.
+
+# ================================================================ 3. PREPROCESAMIENTO
+STEPS <- list(c("target", N("Objetivo"), N("Churn Yes/No → 1/0. customerID solo para control.")), c("shield", N("TotalCharges"), N("Texto a número; los 8 vacíos de train (3 de test) tienen tenure 0 → 0.")),
+              c("layers", N("Ingeniería"), N("“Sin internet / sin teléfono” → “No” y AvgChargePerMonth = TotalCharges / tenure.")), c("table", N("Codificar y escalar"), N("4 numéricas con StandardScaler y 16 categóricas con One-Hot: 24 columnas.")),
+              c("scale", N("Balancear"), N("Ninguno, pesos, SMOTE o ADASYN; solo dentro del entrenamiento.")), c("network", N("Modelo"), N("Se ajusta en entrenamiento y se evalúa en el fold reservado.")))
+COEFS <- data.frame(f = c("cat__Contract_Two year", "num__tenure", "cat__InternetService_No", "cat__InternetService_Fiber optic", "cat__Contract_One year", "num__TotalCharges",
+                          "cat__PaymentMethod_Electronic check", "cat__OnlineSecurity_Yes", "cat__StreamingMovies_Yes", "cat__PaperlessBilling_Yes", "cat__StreamingTV_Yes",
+                          "cat__PhoneService_Yes", "cat__TechSupport_Yes", "cat__MultipleLines_Yes", "num__MonthlyCharges", "cat__Dependents_Yes", "cat__SeniorCitizen_1",
+                          "cat__OnlineBackup_Yes", "cat__PaymentMethod_Mailed check", "num__AvgChargePerMonth", "cat__gender_Male", "cat__Partner_Yes",
+                          "cat__PaymentMethod_Credit card (automatic)", "cat__DeviceProtection_Yes"),
+                    c = c(-1.422598, -1.153496, -1.079819, 1.036427, -0.725538, 0.486039, 0.398853, -0.371758, 0.348344, 0.334539, 0.323924, -0.31652, -0.304333, 0.28687,
+                          -0.272618, -0.231701, 0.153587, -0.110944, 0.0482, -0.046767, 0.029063, 0.019222, -0.00774, 0.004777), stringsAsFactors = FALSE)
+PREP_TABS <- c(N("1 · Pasos"), N("2 · Validación cruzada"), N("3 · Ablación"), N("4 · Evaluación en test"))
+
+preprocesamiento <- function(d, tab = 0) tagList(page_head("preprocesamiento", T("Cómo se transforman los datos antes de modelar, sin espiar el test, y cuánto logra el modelo base.")),
+                                                 tabs("prep-tabs", T(PREP_TABS), tab))
+
+prep_tab <- function(i) {
+  body <- switch(i + 1, {
+    m <- c(T("Imputar con 0"), T("Mediana + indicador")); a_ <- c(.8459, .8460)
+    fi <- plot_ly() %>% add_trace(type = "bar", x = m, y = a_, error_y = list(type = "data", array = c(.0124, .0125), color = GREY), marker = list(color = c(HOT, BASE))) %>%
+      bar_labels(a_, m, .802, 4, horizontal = FALSE) %>% layout(xaxis = cat_axis(m), yaxis = list(range = c(.8, .87), title = "AUC-ROC CV"))
+    tagList(card(tags$h3(class = "chart-title", T("El pipeline paso a paso")),
+                 div(class = "pipeline", div(class = "flow-line"), lapply(seq_along(STEPS), function(k) div(class = "station", style = sprintf("animation-delay:%.2fs", (k - 1) * .15),
+                     tags$span(class = "st-icon", icon(STEPS[[k]][1])), tags$h4(T(STEPS[[k]][2])), tags$p(T(STEPS[[k]][3])))))),
+            grid(chart(T("¿Cero o mediana para TotalCharges?"), fi, T("Diferencia pareada por fold: +0.0001 ± 0.0001. Imputar con 0 es coherente con clientes sin facturación y no pierde desempeño."), 320, FALSE),
+                 card(tags$h3(class = "chart-title", T("Ingeniería de características")),
+                      kpis(kpi(T("CORRELACIÓN CON MONTHLYCHARGES"), .9963, "AvgChargePerMonth", "", 4), kpi(T("COLUMNAS TRAS CODIFICAR"), 24, T("4 numéricas + 20 indicadores")), cls = "k2"),
+                      tags$p(class = "insight", T("El cargo promedio mensual comparte casi toda la información con el cargo mensual; su aporte se evalúa en la ablación.")))))
+  }, {
+    m <- T(c("Regresión logística", "Etiquetas permutadas", "Dummy estratificado", "Dummy mayoritaria")); a_ <- c(.8454, .4868, .5065, .5)
+    fc <- plot_ly() %>% add_trace(type = "bar", x = a_, y = m, orientation = "h", error_x = list(type = "data", array = c(.0123, .0220, .0171, 0), color = GREY),
+                                  marker = list(color = highlight(a_)), text = sprintf("%.4f", a_), textposition = "inside", insidetextanchor = "start") %>%
+      layout(shapes = list(vline(.5, GREY, "dot")), xaxis = list(range = c(0, 1), title = "AUC-ROC CV (5 folds)"), yaxis = cat_axis(m))
+    tagList(kpis(kpi("AUC-ROC CV", .8454, "± 0.0123", "", 4), kpi("PR-AUC CV", .6581, "± 0.0191", "", 4), kpi("RECALL CV", .8020, "± 0.0341", "", 4), kpi(T("CONTROL PERMUTADO"), .4868, T("AUC del azar"), "", 4)),
+            chart(T("Validación cruzada en entrenamiento"), fc, T("El modelo supera con claridad a los controles: con etiquetas permutadas o un clasificador trivial el AUC ronda 0.5."), 340, FALSE))
+  }, {
+    abl <- df(c = T(c("Sin gender", "Sin PhoneService", "Sin PhoneService ni MultipleLines", "Sin gender ni PhoneService", "Sin AvgChargePerMonth")),
+              d = c(.0001, .0002, -.0007, .0004, .0005), sd = c(.0005, .0003, .0018, .0004, .0003), dpr = c(-.0003, -.0003, -.0106, -.0000, .0019))
+    fa <- plot_ly() %>% add_trace(type = "bar", x = abl$d, y = abl$c, orientation = "h", error_x = list(type = "data", array = abl$sd, color = GREY), marker = list(color = BASE)) %>%
+      layout(shapes = list(vline(0)), xaxis = list(title = T("Δ AUC-ROC frente al modelo completo"), tickformat = ".4f"), yaxis = cat_axis(abl$c))
+    names(abl) <- c("Configuración", "Δ AUC", "DE", "Δ PR-AUC")
+    tagList(chart(T("Ablación por validación cruzada"), fa, T("Retirar gender, PhoneService o AvgChargePerMonth cambia el AUC menos que la variación entre folds; las variables se conservan."), 340, FALSE),
+            card(table_ui(tt(abl))))
+  }, {
+    b <- baseline(); cm <- confusion(b$y_true, as.integer(b$probability >= .5))
+    r <- roc_curve(b$y_true, b$probability)
+    co <- COEFS[nrow(COEFS):1, ]; co$n <- pretty(co$f)
+    fco <- plot_ly() %>% add_trace(type = "bar", x = co$c, y = co$n, orientation = "h", marker = list(color = ifelse(grepl("gender|PhoneService", co$f), HOT, BASE))) %>%
+      layout(shapes = list(vline(0)), xaxis = list(title = T("Coeficiente (escala estandarizada)")), yaxis = cat_axis(co$n))
+    tagList(kpis(kpi("ACCURACY", .7395, T("frente a 0.7346 de predecir siempre “permanece”"), "", 4), kpi("PRECISION", .5060, "", "", 4), kpi("RECALL", .7834, "", "hot", 4), kpi("F1", .6149, "", "", 4),
+                 kpi("AUC-ROC", .8419, T("IC 95 % [0.8214, 0.8631]"), "", 4), kpi("PR-AUC", .6340, "", "", 4), cls = "k6"),
+            grid(chart(T("Matriz de confusión"), conf_heat(cm, 18), T("Detecta 293 de 374 abandonos, pero 286 de sus 579 alertas son falsas: hay margen de mejora."), 360, FALSE),
+                 chart(T("Curva ROC"), roc_animation(list(list(name = T("Regresión logística"), fpr = r$fpr, tpr = r$tpr, color = BASE))), T("Pulsa play para trazar la curva. AUC = 0.8419 en el test."), 360)),
+            chart(T("Coeficientes de la regresión logística"), fco, T("Contrato a dos años, antigüedad y no tener internet reducen el riesgo; la fibra óptica lo aumenta. gender y PhoneService (resaltadas) pesan poco."), 640, FALSE))
+  })
+  tab_body(body)
+}
+
 # ================================================================ 4. MODELADO AVANZADO
 METRICS <- c(f1_positive = N("F1 positivo"), recall_positive = "Recall", precision_positive = "Precision", roc_auc = "ROC-AUC", accuracy = "Accuracy")
 MODEL_TABS <- c(N("1 · Resultados por modelo"), N("2 · Calibración"), N("3 · Optimizadores"), N("4 · Multifidelidad"), N("5 · Eficiencia computacional"),
-                N("6 · Comparación estadística"), N("7 · Interpretabilidad"), N("8 · Umbral de alerta"), N("9 · Conclusiones"))
+                N("6 · Comparación estadística"), N("7 · Interpretabilidad"))
 
 podium <- function() {
   p <- list(c("2", "XGBoost", "SMOTE · Random", .638, "second"), c("1", "Random Forest", "SMOTE · TPE", .638, "first"), c("3", T("Reg. logística"), "SMOTE · Grid", .634, "third"))
@@ -35,11 +94,11 @@ podium <- function() {
        tags$p(class = "insight", T("Empate técnico: la diferencia entre RF y XGBoost es 0.0004, menor que la variación entre folds.")))
 }
 
-entregable2 <- function(keep) {
-  tagList(note(T("Entregable 2"), T("Siete familias × cuatro balanceos × cuatro optimizadores = 112 configuraciones evaluadas con validación cruzada anidada y F1 como métrica. Se conservan como referencia; el modelo propio se comparó después con 11 benchmarks recalibrados.")),
+modelado <- function(d, tab = 0) {
+  tagList(page_head("modelado", T("Siete familias × cuatro balanceos × cuatro optimizadores = 112 configuraciones evaluadas con validación cruzada anidada.")),
           div(class = "hero", podium(), kpis(kpi(T("CONFIGURACIONES"), 112, "7 × 4 × 4"), kpi(T("UNIDADES EXTERNAS"), 1680, T("112 × 3 semillas × 5 folds")),
                                               kpi("FOLDS", "5 × 3", T("externos × internos")), kpi(T("PRESUPUESTO"), 24, T("evaluaciones por búsqueda")), cls = "k2")),
-          tabs("model-tabs", T(MODEL_TABS), as.integer(keep("model-tabs", 0))))
+          tabs("model-tabs", T(MODEL_TABS), tab))
 }
 
 model_tab <- function(i, input) {
@@ -60,9 +119,7 @@ model_tab <- function(i, input) {
     tagList(estadistica(), effect_sizes()),
     tagList(card(cls = "controls-card", field(T("Modelo explicado"), dropdown("explain-model", FINALISTS[1:2], keep("explain-model", FINALISTS[1]), setNames(as.list(T(unname(FINALIST_NAMES[FINALISTS[1:2]]))), FINALISTS[1:2]))),
                  uiOutput("explain-output")),
-            note(T("Explicar no es causar"), T("Las atribuciones describen cómo decide el modelo, no qué provoca el abandono. Los casos locales se eligieron por máxima confianza, no por ser representativos."))),
-    umbral_lab(keep),
-    conclusiones())
+            note(T("Explicar no es causar"), T("Las atribuciones describen cómo decide el modelo, no qué provoca el abandono. Los casos locales se eligieron por máxima confianza, no por ser representativos."))))
   tab_body(body)
 }
 
@@ -234,65 +291,4 @@ explain_output <- function(experiment) {
   })
   div(chart(T("SHAP global · probabilidad nativa de abandono"), fb, T("Cada punto es un cliente. A la derecha empuja hacia el abandono; el color indica el valor de la variable (resaltado = alto)."), 560, FALSE),
       subhead(T("Casos locales")), local)
-}
-
-# ---------------------------------------------------------------- 8 · umbral de alerta
-umbral_lab <- function(keep) {
-  tagList(card(cls = "controls-card", div(class = "controls",
-               field(T("Modelo finalista"), dropdown("threshold-model", FINALISTS, keep("threshold-model", FINALISTS[1]), setNames(as.list(T(unname(FINALIST_NAMES[FINALISTS]))), FINALISTS))),
-               field(T("Umbral de alerta"), slider("threshold", .05, .95, .01, keep("threshold", .5), c(`0.1` = "0.10", `0.3` = "0.30", `0.5` = "0.50", `0.7` = "0.70", `0.9` = "0.90"), tooltip = TRUE))),
-               uiOutput("threshold-output")),
-          note(T("Decisión de negocio"), T("Bajar el umbral detecta más clientes en riesgo pero dispara más falsas alertas. Elegirlo bien requiere conocer el costo de cada contacto y de cada cliente perdido.")))
-}
-
-threshold_output <- function(experiment, threshold) {
-  p <- predictions(experiment); tm <- threshold_metrics(p, threshold); cm <- tm$cm; m <- tm$m
-  tn <- cm[1, 1]; fp <- cm[1, 2]; fn <- cm[2, 1]; tp <- cm[2, 2]; total <- sum(cm)
-  # Redondeo como Python (al par más cercano) para que la cuadrícula sume igual que en el dash original.
-  quota <- c(tp = tp, fn = fn, fp = fp, tn = tn) / total * 100; quota <- ifelse(abs(quota %% 1 - .5) < 1e-9, 2 * round(quota / 2), round(quota))
-  names(quota) <- c("tp", "fn", "fp", "tn"); quota[["tn"]] <- quota[["tn"]] + 100 - sum(quota)
-  legend <- list(c("tp", T("Abandonos detectados"), tp), c("fn", T("Abandonos que se escapan"), fn), c("fp", T("Falsas alertas"), fp), c("tn", T("Clientes estables bien leídos"), tn))
-  names_ <- setNames(vapply(legend, `[`, "", 2), vapply(legend, `[`, "", 1))
-  waffle <- unlist(lapply(c("tp", "fn", "fp", "tn"), function(k) rep(sprintf('<span class="w %s" title="%s"></span>', k, htmlEscape(names_[[k]], TRUE)), max(0, quota[[k]]))))
-  rc <- roc_curve(p$y_true, p$score)
-  roc <- plot_ly() %>% add_trace(type = "scatter", mode = "lines", x = rc$fpr, y = rc$tpr, line = list(color = BASE), name = "ROC", fill = "tozeroy", fillcolor = "rgba(46,134,171,.10)") %>%
-    add_trace(type = "scatter", mode = "lines+markers", x = c(0, 1), y = c(0, 1), line = list(dash = "dash", color = GREY), marker = list(color = GREY), name = T("Azar")) %>%
-    add_trace(type = "scatter", mode = "markers", x = fp / (fp + tn), y = tp / (tp + fn), marker = list(size = 14, color = HOT, line = list(color = "white", width = 2)), name = T("Umbral actual")) %>%
-    layout(xaxis = list(title = T("Tasa de falsas alertas")), yaxis = list(title = T("Tasa de detección")))
-  cards <- lapply(names(m), function(k) if (k == "Alertas") kpi(T("ALERTAS"), m[[k]], T("test histórico")) else kpi(toupper(k), round(m[[k]] * 100, 1), T("test histórico"), "", 1, " %"))
-  div(do.call(kpis, cards),
-      grid(card(tags$h3(class = "chart-title", T("100 clientes del test")), div(class = "waffle", HTML(paste(waffle, collapse = ""))),
-                div(class = "legend", lapply(legend, function(l) div(class = "leg", tags$span(class = paste("w", l[1])), paste0(l[2], ": "), tags$b(f0(as.numeric(l[3]))))))),
-           chart(T("Curva ROC y punto de operación"), roc, fmt(T("AUC = {a}. El punto resaltado se mueve con el umbral."), a = sprintf("%.3f", auc(p$y_true, p$score))), 360)))
-}
-
-# ---------------------------------------------------------------- 9 · conclusiones
-REPRO <- list(c("file", N("Versiones exactas"), N("requirements.txt fija cada librería usada en el entrenamiento.")),
-              c("shield", N("Verificación automática"), N("verificar_reproduccion.py compara versiones, huellas SHA-256 de los datos y los artefactos de las 1,680 unidades.")),
-              c("layers", N("Resultados versionados"), N("Pipelines, predicciones, checkpoints y semillas de cada unidad quedan guardados; el libro se construye sin reentrenar.")),
-              c("code", N("Código del experimento"), N("Un apéndice reproduce las 32 celdas exactas que entrenaron las 112 configuraciones.")))
-
-conclusiones <- function() {
-  finds <- list(c("layers", N("El perfil de cuenta delata el riesgo"), N("Contrato, antigüedad y servicio de internet concentran la señal, en el EDA y en SHAP.")),
-                c("link", N("Empate en la cima"), N("Random Forest y XGBoost con SMOTE (F1 0.638) y la regresión logística (0.634) no se separan estadísticamente.")),
-                c("scale", N("Balancear importa más que buscar"), N("SMOTE tiene efecto grande en 5 de 7 familias (δ de Cliff ≥ 0.68); cambiar de optimizador solo ayuda con presupuestos bajos.")),
-                c("gauge", N("Probabilidades más honestas"), N("Platt mejoró Brier y ECE en 80 de 96 configuraciones y la isotónica en 84: isotónica para árboles y GaussianNB, Platt para SVM y KNN.")),
-                c("hourglass", N("Buscar puede costar menos"), N("Successive Halving igualó el F1 de una búsqueda completa en Random Forest y SVM con 3.7× y 7.1× menos tiempo; en XGBoost no conviene.")),
-                c("flame", N("El costo está en el núcleo del algoritmo"), N("LinearSVC entrena 36× y predice unas 900× más rápido que SVC RBF con 0.002 menos de F1; hist acelera 2.8× a XGBoost.")))
-  limits <- c(N("Un único conjunto de datos: los folds no son bloques independientes."), N("El test ya se había usado: es evidencia suplementaria."),
-              N("Los datos son una foto: no garantizan anticipar el abandono futuro."), N("Sin costos de intervención, el F1 no se traduce en dinero."))
-  steps <- list(c(N("Validación temporal"), N("Evaluar en clientes futuros.")), c(N("Costos explícitos"), N("Elegir el umbral con el costo de cada error.")),
-                c(N("Modelo propuesto"), N("Superar a las referencias en desempeño y tiempo.")))
-  tagList(subhead(T("Hallazgos principales"), T("Conclusiones de los entregables 2 y 3; las del modelo propio están en el capítulo 9 del libro.")),
-          div(class = "findings", lapply(finds, function(f) div(class = "finding", tags$span(class = "drv-icon", icon(f[1])), tags$h3(T(f[2])), tags$p(T(f[3]))))),
-          grid(card(eyebrow(T("LIMITACIONES")), tags$ul(lapply(limits, function(x) tags$li(T(x))))),
-               card(eyebrow(T("PRÓXIMOS PASOS")), div(lapply(seq_along(steps), function(k) div(class = "next", tags$span(class = "obj-n", sprintf("0%d", k)), div(tags$h4(T(steps[[k]][1])), tags$p(T(steps[[k]][2])))))))),
-          card(eyebrow(T("REPRODUCIBILIDAD")), tags$h3(T("Todo lo que se reporta se puede verificar")),
-               div(class = "repro", lapply(REPRO, function(r) div(class = "station", tags$span(class = "st-icon", icon(r[1])), tags$h4(T(r[2])), tags$p(T(r[3]))))),
-               tags$a(class = "chip-link", href = paste0(BOOK, "CODIGO_EXPERIMENTO.html"), target = "_blank", icon("code", "sm"), T("Ver el código del experimento en el Jupyter Book"), icon("arrow", "sm"))),
-          card(cls = "glow", div(class = "paper-card",
-               div(eyebrow(T("PAPER DEL PROYECTO")), tags$h2(T("Modelo de clasificación binaria para la predicción de abandono de clientes")),
-                   tags$p(T("Metodología completa, tablas, figuras y referencias en formato Springer Nature."))),
-               div(class = "cover-cta", tags$a(class = "btn primary", href = paste0(BOOK, "paper.html"), target = "_blank", icon("file"), T("Leer el paper")),
-                   tags$a(class = "btn ghost", href = paste0(BOOK, "paper.pdf"), target = "_blank", icon("download"), "PDF")))))
 }

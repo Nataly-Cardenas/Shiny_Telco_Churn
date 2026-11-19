@@ -103,7 +103,6 @@ similar_customers <- function(contract, internet, payment, tenure, monthly) {
     if (nrow(s) >= 30 || w[1] == 72) return(list(s = s, w = list(tenure = w[1], monthly = w[2], payment = w[3] == 1)))
   }
 }
-
 # ---------------------------------------------------------------- resultados del experimento confirmatorio (entregable 4)
 # Tablas y JSON copiados de experiments/resultados/tablas/ (ver data/resultados/procedencia.json).
 .res_cache <- new.env()

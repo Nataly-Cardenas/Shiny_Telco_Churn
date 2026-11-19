@@ -1,15 +1,11 @@
 # Lógica del servidor: cada salida equivale a un callback del dashboard de Dash.
 
-PAGES <- list(contexto = function(tab) contexto_page(), eda = eda_page, modelos = modelos_page)
-PAGE_TABS <- c(eda = "eda-tabs", modelos = "modelos-tabs")
-
 app_server <- function(input, output, session) {
   lang <- reactive(if (identical(input$lang, "en")) "en" else "es")
-  route <- reactive({ k <- input$route %||% "contexto"; if (k %in% names(PAGES)) k else "contexto" })
+  route <- reactive({ k <- input$route %||% "inicio"; if (k %in% names(PAGES)) k else "inicio" })
   tenure <- reactive(input$tenure %||% c(0, 72))
   d <- reactive(cohort(input$split %||% "train", input$contract %||% "Todos", input$internet %||% "Todos", tenure()))
   L <- function() set_lang(lang())   # cada salida fija el idioma antes de construir textos
-  tab_value <- function(id) as.integer(input[[id]] %||% 0)
 
   # ---------------------------------------------------------------- textos fijos e idioma
   observeEvent(lang(), {
@@ -31,13 +27,19 @@ app_server <- function(input, output, session) {
 
   # ---------------------------------------------------------------- páginas
   output$content <- renderUI({
-    L(); key <- route(); tab <- PAGE_TABS[key]
-    div(class = paste("page", key), PAGES[[key]](if (is.na(tab)) 0 else isolate(tab_value(tab))))
+    L(); key <- route()
+    tab <- c(eda = "eda-tabs", preprocesamiento = "prep-tabs", modelado = "model-tabs", modelos_ml = "modelos-tabs")[key]
+    div(class = paste("page", key), PAGES[[key]](isolate(d()), if (is.na(tab)) 0 else isolate(as.integer(input[[tab]] %||% 0))))
   })
+  tab_value <- function(id) as.integer(input[[id]] %||% 0)
 
-  # ---------------------------------------------------------------- EDA
   output$`eda-summary` <- renderUI({ L(); eda_kpis(d()) })
   output$`eda-tabs-body` <- renderUI({ L(); eda_tab(tab_value("eda-tabs"), d(), input) })
+  output$`prep-tabs-body` <- renderUI({ L(); prep_tab(tab_value("prep-tabs")) })
+  output$`model-tabs-body` <- renderUI({ L(); model_tab(tab_value("model-tabs"), input) })
+  output$`modelos-tabs-body` <- renderUI({ L(); modelos_tab(tab_value("modelos-tabs"), input) })
+
+  # ---------------------------------------------------------------- análisis exploratorio
   output$`uni-num-output` <- renderUI({ req(input$`uni-num`); L(); uni_num(input$`uni-num`, d()) })
   output$`uni-cat-output` <- renderUI({ req(input$`uni-cat`); L(); uni_cat(input$`uni-cat`, d()) })
   bi_num_r <- reactive({ req(input$`bi-num`); L(); bi_num(input$`bi-num`, d()) })
@@ -46,20 +48,28 @@ app_server <- function(input, output, session) {
   bi_cat_r <- reactive({ req(input$`bi-cat`); L(); bi_cat(input$`bi-cat`, d()) })
   output$`bi-cat-output` <- renderUI({ L(); bi_cat_r()[[1]] })
   output$`bi-holm-output` <- renderUI({ L(); bi_cat_r()[[2]] })
-  output$`xy-output` <- renderUI({ req(input$`xy-x`, input$`xy-y`, input$`xy-color`); L(); explorador_xy(input$`xy-x`, input$`xy-y`, input$`xy-color`, d()) })
+  output$`free-output` <- renderUI({ req(input$`free-x`, input$`free-y`, input$`free-color`); L(); free_output(input$`free-x`, input$`free-y`, input$`free-color`, d()) })
   output$`explorer-table` <- renderUI({ L(); x <- d(); if (!nrow(x)) empty() else table_ui(x[input$`explorer-cols` %||% "customerID"], page_size = 12) })
   output$export <- downloadHandler(filename = "telco_seleccion.csv", content = function(file) {
     x <- d()[input$`explorer-cols` %||% "customerID"]
     utils::write.csv(x, file, row.names = FALSE, na = "", fileEncoding = "UTF-8")
   })
 
-  # ---------------------------------------------------------------- modelos
-  output$`modelos-tabs-body` <- renderUI({ L(); modelos_tab(tab_value("modelos-tabs"), input) })
+  # ---------------------------------------------------------------- modelado
+  output$`res-output` <- renderUI({ req(input$`res-family`); L(); res_output(input$`res-family`) })
+  output$`models-output` <- renderUI({ req(input$`model-family`, input$`model-balance`, input$`model-metric`); L(); model_output(input$`model-family`, input$`model-balance`, input$`model-metric`) })
+  output$`opt-output` <- renderUI({ req(input$`opt-family`); L(); opt_output(input$`opt-family`) })
+  output$`explain-output` <- renderUI({ req(input$`explain-model`); L(); explain_output(input$`explain-model`) })
+  output$`cal-map-output` <- renderUI({ req(input$`cal-family`); L(); cal_map(input$`cal-family`) })
+  output$`eff-variants-output` <- renderUI({ req(input$`eff-family`); L(); eff_variants(input$`eff-family`) })
+  output$`eff-scale-output` <- renderUI({ req(input$`eff-scale`); L(); eff_scale(input$`eff-scale`) })
+
+  # ---------------------------------------------------------------- modelos finales
   output$`lideres-tabla` <- renderUI({ L(); tabla_lideres(isTRUE(input$`lideres-ablacion`)) })
   output$`diag-salida` <- renderUI({ req(input$`diag-modelo`, input$`diag-eval`); L(); diagnostico_salida(input$`diag-modelo`, input$`diag-eval`) })
   output$`shap-salida` <- renderUI({ req(input$`shap-modelo`); L(); shap_salida(input$`shap-modelo`) })
 
-  # Predicción en vivo: se recalcula al pulsar Predecir, al cambiar de modelo o al cargar un cliente del hold-out.
+  # Predicción en vivo: se recalcula al pulsar Predecir, al cambiar de modelo o de umbral, o al cargar un cliente del hold-out.
   entrada <- reactiveVal(cliente_valores(EJEMPLO()))
   formulario <- function() setNames(lapply(ENTRADA, function(c) {
     v <- input[[paste0("in-", c)]]
@@ -78,18 +88,10 @@ app_server <- function(input, output, session) {
   observeEvent(input$`pred-boton`, entrada(formulario()), ignoreInit = TRUE)
   observeEvent(input$`pred-modelo`, { f <- formulario(); if (!all(vapply(f, is.null, TRUE))) entrada(f) }, ignoreInit = TRUE)
   observeEvent(input$`pred-azar`, updateSelectizeInput(session, "pred-ejemplo", selected = as.character(sample(TEST_IDS, 1))), ignoreInit = TRUE)
-  output$`pred-salida` <- renderUI({ req(input$`pred-modelo`); L(); prediccion_salida(input$`pred-modelo`, entrada()) })
-
-  # ---------------------------------------------------------------- entregable 2
-  output$`model-tabs-body` <- renderUI({ L(); model_tab(tab_value("model-tabs"), input) })
-  output$`res-output` <- renderUI({ req(input$`res-family`); L(); res_output(input$`res-family`) })
-  output$`models-output` <- renderUI({ req(input$`model-family`, input$`model-balance`, input$`model-metric`); L(); model_output(input$`model-family`, input$`model-balance`, input$`model-metric`) })
-  output$`opt-output` <- renderUI({ req(input$`opt-family`); L(); opt_output(input$`opt-family`) })
-  output$`explain-output` <- renderUI({ req(input$`explain-model`); L(); explain_output(input$`explain-model`) })
-  output$`cal-map-output` <- renderUI({ req(input$`cal-family`); L(); cal_map(input$`cal-family`) })
-  output$`eff-variants-output` <- renderUI({ req(input$`eff-family`); L(); eff_variants(input$`eff-family`) })
-  output$`eff-scale-output` <- renderUI({ req(input$`eff-scale`); L(); eff_scale(input$`eff-scale`) })
-  output$`threshold-output` <- renderUI({ req(input$`threshold-model`); L(); threshold_output(input$`threshold-model`, input$threshold %||% .5) })
+  output$`pred-salida` <- renderUI({
+    req(input$`pred-modelo`); L()
+    prediccion_salida(input$`pred-modelo`, entrada(), input$`pred-umbral-modo` %||% "f1", input$`pred-umbral` %||% .5)
+  })
 
   # ---------------------------------------------------------------- asistente
   log <- reactiveVal(list())

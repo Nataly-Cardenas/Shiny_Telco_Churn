@@ -6,8 +6,9 @@
 
 MODEL <- "claude-opus-5-5"
 FAQ <- jsonlite::fromJSON(file.path(DATA, "faq.json"), simplifyDataFrame = FALSE)
-EXTRA <- jsonlite::fromJSON(file.path(DATA, "chatbot_extra.json"), simplifyVector = FALSE)   # sugerencias e instrucciones del dash
-SUGGESTIONS <- unlist(EXTRA$SUGGESTIONS)
+# Sugerencias y prompt del sistema: los mismos textos del dash (chatbot.py), guardados como datos.
+EXTRA <- jsonlite::fromJSON(file.path(DATA, "chatbot_extra.json"), simplifyVector = TRUE)
+SUGGESTIONS <- c(N("¿Qué clientes abandonan más?"), N("¿Cuál fue el mejor modelo?"), N("¿Qué es SMOTE y por qué se usó?"), N("¿Cómo hago una predicción en vivo?"), N("¿Cómo descargo los datos?"))
 SYSTEM <- EXTRA$SYSTEM
 
 # ---------------------------------------------------------------- búsqueda TF-IDF por n-gramas de caracteres
@@ -93,8 +94,8 @@ data_answer <- function(question, lang) {
   if (!nrow(d)) return(if (lang == "en") "No training customers match that profile." else "Ningún cliente de entrenamiento tiene ese perfil.")
   n <- nrow(d); k <- sum(d$target); profile <- paste(desc, collapse = " · ")
   if (lang == "en")
-    return(sprintf("In the training set, customers with **%s** are %s; %s of them churned (**%s**), versus 26.5 %% overall. It is an observed association, not a cause. You can explore it in *EDA → 3 · Bivariate* and *EDA → 4 · Bivariate explorer*.", profile, f0(n), f0(k), pct(k / n)))
-  sprintf("En el conjunto de entrenamiento, los clientes con **%s** son %s; de ellos abandonaron %s (**%s**), frente al 26.5 %% general. Es una asociación observada, no una causa. Puedes explorarlo en *EDA → 3 · Bivariado* y en *EDA → 4 · Explorador bivariado*.", profile, f0(n), f0(k), pct(k / n))
+    return(sprintf("In the training set, customers with **%s** are %s; %s of them churned (**%s**), versus 26.5 %% overall. It is an observed association, not a cause. You can explore it in *Exploratory analysis → 3 · Bivariate* and *7 · Data explorer*.", profile, f0(n), f0(k), pct(k / n)))
+  sprintf("En el conjunto de entrenamiento, los clientes con **%s** son %s; de ellos abandonaron %s (**%s**), frente al 26.5 %% general. Es una asociación observada, no una causa. Puedes explorarlo en *Análisis exploratorio → 3 · Bivariado* y en *7 · Explorador de datos*.", profile, f0(n), f0(k), pct(k / n))
 }
 
 faq_text <- function(i, lang) FAQ[[i]][[if (lang == "en") "en" else "es"]]

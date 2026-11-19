@@ -61,13 +61,13 @@ test_that("modeling artifacts match the book", {
 test_that("charts use one color plus the highlight", {
   allowed <- toupper(c(BASE, HOT, GREY, "#0b1426", "#eaf2ff", "#8792a8", "#ffffff"))
   set_lang("es"); d <- rows(TRAIN_IDS)
-  html <- paste(render(eda_tab(3, d, list())), render(eda_tab(7, d, list())), render(diagnostico_salida(ORIGINAL, "holdout")), render(comparacion()), render(model_output("random_forest", "Todos", "f1_positive")), render(threshold_output(FINALISTS[1], .5)))
+  html <- paste(render(eda_tab(3, d, list())), render(prep_tab(3)), render(model_output("random_forest", "Todos", "f1_positive")), render(diagnostico_salida(ORIGINAL, "holdout")), render(modelos_tab(0, list())))
   used <- unique(toupper(regmatches(html, gregexpr("#[0-9A-Fa-f]{6}\\b", html))[[1]]))
   expect_equal(setdiff(used, allowed), character())
 })
 
 test_that("assistant answers from its own knowledge base and computes profiles", {
-  expect_false(exists("chunks")); expect_equal(length(FAQ), 49)
+  expect_false(exists("chunks")); expect_equal(length(FAQ), 47)
   a <- answer("¿Qué es el diagrama de Nemenyi?", list(), "es"); expect_match(a, "Nemenyi")
   a <- answer("tasa de abandono con fibra y mes a mes", list(), "es"); expect_match(a, "Contrato: Mes a mes", fixed = TRUE)
   expect_match(answer("precio del dolar hoy", list(), "es"), "No encontré")

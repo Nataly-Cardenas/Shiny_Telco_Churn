@@ -69,8 +69,8 @@
 "which model won",
 "what is the best model"
 ],
-"es": "En la comparación final por log-loss, **RegionalMAPEM** (el modelo propio, 0.41127) empata con la **logística con splines** (0.41130): ninguna prueba rechaza H0 tras Holm, así que no hay un ganador demostrado. En el entregable 2, por F1, **Random Forest con SMOTE** obtuvo 0.638 ± 0.023, empatado con XGBoost (0.638). Míralo en *Modelos → Tabla de líderes*.",
-"en": "In the final log-loss comparison, **RegionalMAPEM** (our own model, 0.41127) ties with **logistic regression with splines** (0.41130): no test rejects H0 after Holm, so there is no proven winner. In deliverable 2, by F1, **Random Forest with SMOTE** reached 0.638 ± 0.023, tied with XGBoost (0.638). See *Models → Leaderboard*."
+"es": "**Random Forest con SMOTE** obtuvo el mayor F1 medio (0.638 ± 0.023), empatado con **XGBoost con SMOTE** (0.638) y seguido por la regresión logística (0.634). Las diferencias no son estadísticamente detectables, así que no hay un ganador demostrado. Míralo en *Modelado avanzado*.",
+"en": "**Random Forest with SMOTE** had the highest mean F1 (0.638 ± 0.023), tied with **XGBoost with SMOTE** (0.638) and followed by logistic regression (0.634). The differences are not statistically detectable, so there is no proven winner. See *Advanced modeling*."
 },
 {
 "q": [
@@ -138,8 +138,8 @@
 "grid random tpe genético",
 "which optimizer"
 ],
-"es": "Con el mismo presupuesto de 24 evaluaciones, TPE, Random y el algoritmo genético solo mejoraron a Grid con presupuestos bajos; al final quedaron prácticamente empatados. El balanceo influyó mucho más que el buscador. Míralo en *Modelos → Entregable 2 → 3 · Optimizadores*.",
-"en": "With the same budget of 24 evaluations, TPE, Random and the genetic algorithm only beat Grid at low budgets; in the end they were practically tied. Balancing mattered far more than the search method. See *Models → Deliverable 2 → 3 · Optimizers*."
+"es": "Con el mismo presupuesto de 24 evaluaciones, TPE, Random y el algoritmo genético solo mejoraron a Grid con presupuestos bajos; al final quedaron prácticamente empatados. El balanceo influyó mucho más que el buscador. Míralo en *Modelado avanzado → 3 · Optimizadores*.",
+"en": "With the same budget of 24 evaluations, TPE, Random and the genetic algorithm only beat Grid at low budgets; in the end they were practically tied. Balancing mattered far more than the search method. See *Advanced modeling → 3 · Optimizers*."
 },
 {
 "q": [
@@ -150,8 +150,8 @@
 "what is calibration",
 "isotonic calibration"
 ],
-"es": "Balancear infla las probabilidades, así que se recalibraron con dos métodos: **Platt** (curva en S de dos parámetros) e **isotónica** (escalera no decreciente, sin forma fija). Platt mejoró Brier y ECE frente a la probabilidad nativa en 80 de 96 configuraciones y la isotónica en 84; entre ellas la diferencia de Brier está en la cuarta cifra decimal. Conviene isotónica en árboles y GaussianNB, y Platt en SVM y KNN. Míralo en *Modelos → Entregable 2 → 2 · Calibración*.",
-"en": "Balancing inflates probabilities, so they were recalibrated two ways: **Platt** (a two-parameter S curve) and **isotonic** (a non-decreasing staircase with no fixed shape). Platt improved Brier and ECE over the native probability in 80 of 96 configurations and isotonic in 84; between them the Brier difference is in the fourth decimal. Isotonic suits trees and GaussianNB, Platt suits SVM and KNN. See *Models → Deliverable 2 → 2 · Calibration*."
+"es": "Balancear infla las probabilidades, así que se recalibraron con dos métodos: **Platt** (curva en S de dos parámetros) e **isotónica** (escalera no decreciente, sin forma fija). Platt mejoró Brier y ECE frente a la probabilidad nativa en 80 de 96 configuraciones y la isotónica en 84; entre ellas la diferencia de Brier está en la cuarta cifra decimal. Conviene isotónica en árboles y GaussianNB, y Platt en SVM y KNN. Míralo en *Modelado avanzado → 2 · Calibración*.",
+"en": "Balancing inflates probabilities, so they were recalibrated two ways: **Platt** (a two-parameter S curve) and **isotonic** (a non-decreasing staircase with no fixed shape). Platt improved Brier and ECE over the native probability in 80 of 96 configurations and isotonic in 84; between them the Brier difference is in the fourth decimal. Isotonic suits trees and GaussianNB, Platt suits SVM and KNN. See *Advanced modeling → 2 · Calibration*."
 },
 {
 "q": [
@@ -162,8 +162,8 @@
 "what is successive halving",
 "multi-fidelity"
 ],
-"es": "**Successive Halving** evalúa 27 candidatos con poco recurso (pocos árboles o pocas filas), descarta los peores en cada ronda y reserva el presupuesto completo para el ganador: 12 ajustes completos frente a 72. Igualó el F1 de una búsqueda completa en Random Forest y SVM con 3.7× y 7.1× menos tiempo, pero en XGBoost ahorró poco (1.6×) y eligió peor. Míralo en *Modelos → Entregable 2 → 4 · Multifidelidad*.",
-"en": "**Successive Halving** evaluates 27 candidates with little resource (few trees or few rows), drops the worst each round and saves the full budget for the winner: 12 full fits instead of 72. It matched the F1 of a full search in Random Forest and SVM with 3.7× and 7.1× less time, but in XGBoost it saved little (1.6×) and picked worse. See *Models → Deliverable 2 → 4 · Multi-fidelity*."
+"es": "**Successive Halving** evalúa 27 candidatos con poco recurso (pocos árboles o pocas filas), descarta los peores en cada ronda y reserva el presupuesto completo para el ganador: 12 ajustes completos frente a 72. Igualó el F1 de una búsqueda completa en Random Forest y SVM con 3.7× y 7.1× menos tiempo, pero en XGBoost ahorró poco (1.6×) y eligió peor. Míralo en *Modelado avanzado → 4 · Multifidelidad*.",
+"en": "**Successive Halving** evaluates 27 candidates with little resource (few trees or few rows), drops the worst each round and saves the full budget for the winner: 12 full fits instead of 72. It matched the F1 of a full search in Random Forest and SVM with 3.7× and 7.1× less time, but in XGBoost it saved little (1.6×) and picked worse. See *Advanced modeling → 4 · Multi-fidelity*."
 },
 {
 "q": [
@@ -176,8 +176,8 @@
 "computational efficiency",
 "which model is fastest"
 ],
-"es": "El costo está en el núcleo de cada algoritmo: el 81 % del ajuste de SVM ocurre en su solver y el 84 % de la predicción de KNN en las distancias. SVM RBF escala como n². Cambiarlo por **LinearSVC** acelera 36× el entrenamiento y unas 900× la inferencia perdiendo solo 0.002 de F1; `hist` es 2.8× más rápido que el método exacto en XGBoost y paralelizar da 2× en Random Forest. Míralo en *Modelos → Entregable 2 → 5 · Eficiencia computacional*.",
-"en": "The cost sits in the core of each algorithm: 81 % of the SVM fit is in its solver and 84 % of KNN prediction is distance computation. RBF SVM scales as n². Swapping it for **LinearSVC** speeds training up 36× and inference about 900× while losing only 0.002 F1; `hist` is 2.8× faster than the exact method in XGBoost and parallelizing gives 2× in Random Forest. See *Models → Deliverable 2 → 5 · Computational efficiency*."
+"es": "El costo está en el núcleo de cada algoritmo: el 81 % del ajuste de SVM ocurre en su solver y el 84 % de la predicción de KNN en las distancias. SVM RBF escala como n². Cambiarlo por **LinearSVC** acelera 36× el entrenamiento y unas 900× la inferencia perdiendo solo 0.002 de F1; `hist` es 2.8× más rápido que el método exacto en XGBoost y paralelizar da 2× en Random Forest. Míralo en *Modelado avanzado → 5 · Eficiencia computacional*.",
+"en": "The cost sits in the core of each algorithm: 81 % of the SVM fit is in its solver and 84 % of KNN prediction is distance computation. RBF SVM scales as n². Swapping it for **LinearSVC** speeds training up 36× and inference about 900× while losing only 0.002 F1; `hist` is 2.8× faster than the exact method in XGBoost and parallelizing gives 2× in Random Forest. See *Advanced modeling → 5 · Computational efficiency*."
 },
 {
 "q": [
@@ -187,8 +187,8 @@
 "effect size",
 "cliff delta"
 ],
-"es": "El **tamaño del efecto** dice si una diferencia importa, no solo si es improbable por azar. Con el δ de Cliff, las diferencias entre los tres finalistas son despreciables (δ entre −0.06 y 0.10), mientras que SMOTE tiene un efecto grande en 5 de 7 familias (δ ≥ 0.68). Los 31 pares que separa Nemenyi tienen δ = 1. Míralo en *Modelos → Entregable 2 → 6 · Comparación estadística*.",
-"en": "The **effect size** says whether a difference matters, not just whether it is unlikely by chance. With Cliff's δ, the differences among the three finalists are negligible (δ between −0.06 and 0.10), while SMOTE has a large effect in 5 of 7 families (δ ≥ 0.68). The 31 pairs Nemenyi separates have δ = 1. See *Models → Deliverable 2 → 6 · Statistical comparison*."
+"es": "El **tamaño del efecto** dice si una diferencia importa, no solo si es improbable por azar. Con el δ de Cliff, las diferencias entre los tres finalistas son despreciables (δ entre −0.06 y 0.10), mientras que SMOTE tiene un efecto grande en 5 de 7 familias (δ ≥ 0.68). Los 31 pares que separa Nemenyi tienen δ = 1. Míralo en *Modelado avanzado → 6 · Comparación estadística*.",
+"en": "The **effect size** says whether a difference matters, not just whether it is unlikely by chance. With Cliff's δ, the differences among the three finalists are negligible (δ between −0.06 and 0.10), while SMOTE has a large effect in 5 of 7 families (δ ≥ 0.68). The 31 pairs Nemenyi separates have δ = 1. See *Advanced modeling → 6 · Statistical comparison*."
 },
 {
 "q": [
@@ -198,8 +198,8 @@
 "is it reproducible",
 "where is the code"
 ],
-"es": "Sí: `requirements.txt` fija las versiones exactas, `verificar_reproduccion.py` comprueba versiones, huellas SHA-256 de los datos y los artefactos de las 1,680 unidades, y el Jupyter Book incluye un apéndice con el código exacto del entrenamiento de las 112 configuraciones. Está resumido en *Modelos → Entregable 2 → Conclusiones*.",
-"en": "Yes: `requirements.txt` pins exact versions, `verificar_reproduccion.py` checks versions, SHA-256 fingerprints of the data and the artifacts of the 1,680 units, and the Jupyter Book includes an appendix with the exact training code of the 112 configurations. It is summarized in *Models → Deliverable 2 → Conclusions*."
+"es": "Sí: `requirements.txt` fija las versiones exactas, `verificar_reproduccion.py` comprueba versiones, huellas SHA-256 de los datos y los artefactos de las 1,680 unidades, y el Jupyter Book incluye un apéndice con el código exacto del entrenamiento de las 112 configuraciones. Está resumido en *Conclusiones*.",
+"en": "Yes: `requirements.txt` pins exact versions, `verificar_reproduccion.py` checks versions, SHA-256 fingerprints of the data and the artifacts of the 1,680 units, and the Jupyter Book includes an appendix with the exact training code of the 112 configurations. It is summarized in *Conclusions*."
 },
 {
 "q": [
@@ -218,20 +218,17 @@
 "interpretabilidad",
 "what is shap"
 ],
-"es": "**SHAP** reparte cada predicción entre las variables (valores de Shapley) y su promedio da la importancia global. **LIME** explica un cliente concreto con un modelo simple local. Describen al modelo, no causas del abandono. Míralo en *Modelos → Interpretabilidad global* y en la explicación de *Predicción en vivo*.",
-"en": "**SHAP** splits each prediction among the variables (Shapley values) and its average gives global importance. **LIME** explains one customer with a simple local model. They describe the model, not causes of churn. See *Models → Global interpretability* and the explanation in *Live prediction*."
+"es": "**SHAP** reparte cada predicción entre las variables (valores de Shapley) y su promedio da la importancia global. **LIME** explica un cliente concreto con un modelo simple local. Describen al modelo, no causas del abandono. Míralo en *Modelado avanzado → 7 · Interpretabilidad*.",
+"en": "**SHAP** splits each prediction among the variables (Shapley values) and its average gives global importance. **LIME** explains one customer with a simple local model. They describe the model, not causes of churn. See *Advanced modeling → 7 · Interpretability*."
 },
 {
 "q": [
-"cómo hago una predicción",
-"cómo uso la predicción en vivo",
-"cómo uso el simulador",
-"how do i make a prediction",
-"live prediction",
-"how do i use the simulator"
+"cómo hago una predicción en vivo",
+"predicción en vivo",
+"how do i make a live prediction"
 ],
-"es": "En *Modelos → Predicción en vivo* eliges un modelo, cargas un cliente del hold-out o editas sus 19 variables y pulsas **Predecir**. Verás la probabilidad calibrada, la decisión con el umbral F1, el conjunto conforme al 90 % y la explicación SHAP de ese cliente. Los modelos ya están entrenados: el dash no reentrena nada.",
-"en": "In *Models → Live prediction* you pick a model, load a hold-out customer or edit its 19 variables and press **Predict**. You get the calibrated probability, the decision at the F1 threshold, the 90 % conformal set and the SHAP explanation for that customer. Models are already trained: the dash never retrains."
+"es": "En *Modelos finales → Predicción en vivo* eliges un modelo, cargas un cliente del hold-out o editas cualquier variable del formulario, y pulsas *Predecir*: ves la probabilidad calibrada, la decisión, el conjunto conforme al 90 % y la explicación SHAP local. Con *Umbral de alerta* eliges el que maximiza el F1 o uno propio.",
+"en": "In *Final models → Live prediction* you pick a model, load a hold-out customer or edit any form variable, and press *Predict*: you get the calibrated probability, the decision, the 90 % conformal set and the local SHAP explanation. With *Alert threshold* you choose the F1-maximizing one or your own."
 },
 {
 "q": [
@@ -251,8 +248,8 @@
 "download csv",
 "export the table"
 ],
-"es": "Ve a *EDA → Explorador de datos*, elige las columnas y pulsa **Descargar CSV**. Se descarga un solo archivo con la selección de los filtros superiores.",
-"en": "Go to *EDA → Data explorer*, pick the columns and press **Download CSV**. You get a single file with the current selection of the top filters."
+"es": "Ve a *Análisis exploratorio → Explorador de datos*, elige las columnas y pulsa **Descargar CSV**. Se descarga un solo archivo con la selección de los filtros superiores.",
+"en": "Go to *Exploratory analysis → Data explorer*, pick the columns and press **Download CSV**. You get a single file with the current selection of the top filters."
 },
 {
 "q": [
@@ -272,8 +269,8 @@
 "cómo navego",
 "what sections"
 ],
-"es": "El dash tiene tres secciones en la barra superior: **Contexto** (problema, pregunta, datos, metodología, limitaciones y autoras), **EDA** (filtros y análisis exploratorio) y **Modelos** (tabla de líderes, predicción en vivo, diagnóstico, comparación estadística, modelo original y ficha del modelo). La portada es interactiva: pasa el cursor sobre los puntos rojos para retener clientes.",
-"en": "The dash has three sections in the top bar: **Context** (problem, question, data, methodology, limitations and authors), **EDA** (filters and exploratory analysis) and **Models** (leaderboard, live prediction, diagnostics, statistical comparison, original model and model card). The cover is interactive: hover over the red dots to retain customers."
+"es": "El dash sigue el orden del proyecto: Introducción, Análisis exploratorio, Preprocesamiento, Modelado avanzado, Modelos finales (con la predicción en vivo), Conclusiones y Autoras. La portada es interactiva: pasa el cursor sobre los puntos rojos para retener clientes.",
+"en": "The dash follows the project's order: Introduction, Exploratory analysis, Preprocessing, Advanced modeling, Final models (with the live prediction), Conclusions and Authors. The cover is interactive: hover over the red dots to retain customers."
 },
 {
 "q": [
@@ -299,8 +296,8 @@
 "cuáles son las limitaciones",
 "limitations"
 ],
-"es": "Telco es un solo operador ficticio y una sola foto en el tiempo; en Telco las regiones de RegionalMAPEM no aportan frente a pesos globales; el modelo propio necesita a los 11 expertos para predecir, y sin costos de retención el umbral no se traduce en dinero.",
-"en": "Telco is a single fictional operator and a single snapshot in time; in Telco the regions of RegionalMAPEM add nothing over global weights; our model needs the 11 experts to predict, and without retention costs the threshold does not translate into money."
+"es": "Se usó un único conjunto de datos, el test ya había sido expuesto (es evidencia suplementaria), los datos son una foto de un momento y no hay costos de intervención, así que el F1 no se traduce directamente en dinero.",
+"en": "A single dataset was used, the test set had already been seen (it is supplementary evidence), the data are a snapshot in time and there are no intervention costs, so F1 does not translate directly into money."
 },
 {
 "q": [
@@ -320,8 +317,8 @@
 "future work",
 "next steps"
 ],
-"es": "Los próximos pasos son validar en clientes futuros (validación temporal), incorporar costos explícitos para elegir el umbral y probar las regiones de RegionalMAPEM en conjuntos con más heterogeneidad entre clientes.",
-"en": "Next steps are validating on future customers (temporal validation), adding explicit costs to choose the threshold, and testing the regions of RegionalMAPEM on datasets with more heterogeneity between customers."
+"es": "Los próximos pasos son validar en clientes futuros (validación temporal), incorporar costos explícitos para elegir el umbral y diseñar un modelo propio que supere a las referencias en desempeño y tiempo.",
+"en": "Next steps are validating on future customers (temporal validation), adding explicit costs to choose the threshold, and designing a proposed model that beats the baselines in performance and time."
 },
 {
 "q": [
@@ -331,8 +328,8 @@
 "what variables are there",
 "what does tenure mean"
 ],
-"es": "Hay 19 variables candidatas: de **cuenta** (contrato, método de pago, factura electrónica, `tenure` = antigüedad en meses, `MonthlyCharges` = cargo mensual, `TotalCharges` = cargo acumulado), de **servicios** (teléfono, líneas múltiples, internet, seguridad y respaldo en línea, protección de dispositivos, soporte técnico, streaming) y **demográficas** (género, adulto mayor, pareja, dependientes). Están descritas en *Contexto* y analizadas en *EDA*.",
-"en": "There are 19 candidate variables: **account** (contract, payment method, paperless billing, `tenure` = months as a customer, `MonthlyCharges`, `TotalCharges`), **services** (phone, multiple lines, internet, online security and backup, device protection, tech support, streaming) and **demographics** (gender, senior citizen, partner, dependents). They are described in *Context* and analyzed in *EDA*."
+"es": "Hay 19 variables candidatas: de **cuenta** (contrato, método de pago, factura electrónica, `tenure` = antigüedad en meses, `MonthlyCharges` = cargo mensual, `TotalCharges` = cargo acumulado), de **servicios** (teléfono, líneas múltiples, internet, seguridad y respaldo en línea, protección de dispositivos, soporte técnico, streaming) y **demográficas** (género, adulto mayor, pareja, dependientes). Están descritas en *Introducción* y analizadas en *Análisis exploratorio*.",
+"en": "There are 19 candidate variables: **account** (contract, payment method, paperless billing, `tenure` = months as a customer, `MonthlyCharges`, `TotalCharges`), **services** (phone, multiple lines, internet, online security and backup, device protection, tech support, streaming) and **demographics** (gender, senior citizen, partner, dependents). They are described in *Introduction* and analyzed in *Exploratory analysis*."
 },
 {
 "q": [
@@ -343,8 +340,8 @@
 "what are the red dots",
 "what does the phone show"
 ],
-"es": "La **portada** muestra una red de clientes conectados a un celular. Los puntos rojos son clientes a punto de irse: si pasas el cursor encima los retienes. El celular recorre clientes reales del hold-out con la probabilidad de abandono que les dio RegionalMAPEM y lo que pasó en realidad.",
-"en": "The **cover** shows a network of customers connected to a phone. Red dots are customers about to leave: hover over them to retain them. The phone cycles through real hold-out customers with the churn probability given by RegionalMAPEM and what actually happened."
+"es": "La **portada** muestra una red de clientes conectados a un celular. Los puntos rojos son clientes a punto de irse: si pasas el cursor encima los retienes. El celular recorre clientes reales del test con la probabilidad de abandono que les dio el Random Forest finalista y lo que pasó en realidad.",
+"en": "The **cover** shows a network of customers connected to a phone. Red dots are customers about to leave: hover over them to retain them. The phone cycles through real test customers with the churn probability given by the finalist Random Forest and what actually happened."
 },
 {
 "q": [
@@ -354,8 +351,8 @@
 "what is in the introduction",
 "where are the objectives"
 ],
-"es": "La sección *Contexto* presenta el problema con una cifra citada, la pregunta de investigación, los objetivos, la ficha de los datos y el diccionario de variables, el diagrama de la metodología, el **marco teórico** en tarjetas que se voltean, las limitaciones, la ética y las autoras.",
-"en": "The *Context* section presents the problem with a cited figure, the research question, the objectives, the data sheet and variable dictionary, the methodology diagram, the **theoretical framework** as flip cards, the limitations, ethics and the authors."
+"es": "La sección *Introducción* presenta el contexto del problema, el objetivo general, los 8 objetivos específicos, el **marco teórico** en tarjetas que se voltean y la descripción de las 21 variables.",
+"en": "The *Introduction* section presents the problem context, the main goal, the 8 specific objectives, the **theoretical framework** as flip cards and the description of the 21 variables."
 },
 {
 "q": [
@@ -364,8 +361,8 @@
 "what is in the exploratory analysis",
 "what do the filters do"
 ],
-"es": "*EDA* tiene una pestaña por parte del análisis: 1 ETL y partición, 2 Univariado, 3 Bivariado, 4 Explorador bivariado (eliges ejes y color), 5 Multivariado, 6 Valores faltantes, 7 Resumen, 8 Preparación de datos y 9 Explorador de datos. Los filtros de arriba (universo, contrato, internet y antigüedad) recalculan todas sus gráficas y tablas.",
-"en": "*EDA* has one tab per part of the analysis: 1 ETL and split, 2 Univariate, 3 Bivariate, 4 Bivariate explorer (you pick axes and color), 5 Multivariate, 6 Missing values, 7 Summary, 8 Data preparation and 9 Data explorer. The top filters (population, contract, internet and tenure) recompute all its charts and tables."
+"es": "*Análisis exploratorio* tiene una pestaña por parte del EDA: 1 ETL y partición, 2 Univariado, 3 Bivariado, 4 Multivariado, 5 Valores faltantes, 6 Resumen y 7 Explorador de datos. Los filtros de arriba (universo, contrato, internet y antigüedad) recalculan todas sus gráficas y tablas.",
+"en": "*Exploratory analysis* has one tab per part of the EDA: 1 ETL and split, 2 Univariate, 3 Bivariate, 4 Multivariate, 5 Missing values, 6 Summary and 7 Data explorer. The top filters (population, contract, internet and tenure) recompute all its charts and tables."
 },
 {
 "q": [
@@ -402,8 +399,8 @@
 "what is in the preprocessing section",
 "what is the pipeline"
 ],
-"es": "*EDA → Preparación de datos* muestra los pasos del pipeline, la imputación de TotalCharges con 0 frente a la mediana, la ingeniería de características y el modelo base del entregable 2 en test (matriz de confusión y curva ROC, AUC 0.8419).",
-"en": "*EDA → Data preparation* shows the pipeline steps, imputing TotalCharges with 0 vs. the median, feature engineering and the deliverable 2 baseline on test (confusion matrix and ROC curve, AUC 0.8419)."
+"es": "*Preprocesamiento* muestra los pasos del pipeline, la imputación de TotalCharges con 0 frente a la mediana, la validación cruzada (AUC 0.8454 frente a controles cercanos a 0.5), la ablación de variables y la evaluación del modelo base en test: matriz de confusión, curva ROC (AUC 0.8419) y coeficientes.",
+"en": "*Preprocessing* shows the pipeline steps, imputing TotalCharges with 0 vs. the median, cross-validation (AUC 0.8454 vs. controls near 0.5), the variable ablation and the baseline evaluated on test: confusion matrix, ROC curve (AUC 0.8419) and coefficients."
 },
 {
 "q": [
@@ -412,8 +409,8 @@
 "what is in the advanced modeling section",
 "what is the podium"
 ],
-"es": "*Modelos → Entregable 2* conserva el podio de finalistas de las 112 configuraciones y ocho pestañas: resultados por modelo (matriz de confusión, ROC, confiabilidad y robustez entre semillas), calibración Platt e isotónica, optimizadores (convergencia, diversidad, costo y tamaño del efecto), multifidelidad (Successive Halving), eficiencia computacional (perfilamiento, implementaciones alternativas, escalamiento y paralelismo), comparación estadística (Friedman, Nemenyi, DeLong y tamaños del efecto) interpretabilidad (SHAP y LIME) y umbral de alerta.",
-"en": "*Models → Deliverable 2* keeps the finalists podium of the 112 configurations and eight tabs: results by model (confusion matrix, ROC, reliability and robustness across seeds), Platt and isotonic calibration, optimizers (convergence, diversity, cost and effect size), multi-fidelity (Successive Halving), computational efficiency (profiling, alternative implementations, scaling and parallelism), statistical comparison (Friedman, Nemenyi, DeLong and effect sizes) interpretability (SHAP and LIME) and alert threshold."
+"es": "*Modelado avanzado* tiene el podio de finalistas y siete pestañas: resultados por modelo (matriz de confusión, ROC, confiabilidad y robustez entre semillas), calibración Platt e isotónica, optimizadores (convergencia, diversidad, costo y tamaño del efecto), multifidelidad (Successive Halving), eficiencia computacional (perfilamiento, implementaciones alternativas, escalamiento y paralelismo), comparación estadística (Friedman, Nemenyi, DeLong y tamaños del efecto) e interpretabilidad (SHAP y LIME).",
+"en": "*Advanced modeling* has the finalists podium and seven tabs: results by model (confusion matrix, ROC, reliability and robustness across seeds), Platt and isotonic calibration, optimizers (convergence, diversity, cost and effect size), multi-fidelity (Successive Halving), computational efficiency (profiling, alternative implementations, scaling and parallelism), statistical comparison (Friedman, Nemenyi, DeLong and effect sizes) and interpretability (SHAP and LIME)."
 },
 {
 "q": [
@@ -422,37 +419,16 @@
 "what is the nemenyi diagram",
 "critical difference"
 ],
-"es": "En el **diagrama de diferencia crítica** de *Modelos → Comparación estadística* cada modelo aparece en su rango medio sobre las 25 evaluaciones externas; las barras unen los modelos que Nemenyi no distingue (CD = 4.94). En *Entregable 2* hay otro diagrama de Nemenyi con las 112 configuraciones (CD = 89.4).",
-"en": "In the **critical difference diagram** in *Models → Statistical comparison* each model sits at its mean rank over the 25 outer evaluations; bars join the models Nemenyi cannot tell apart (CD = 4.94). *Deliverable 2* has another Nemenyi diagram with the 112 configurations (CD = 89.4)."
+"es": "En el diagrama de **Nemenyi** cada punto es una de las 112 configuraciones ordenada por su rango medio. Las que caen dentro de la banda de la diferencia crítica (89.4) no se distinguen estadísticamente de la mejor.",
+"en": "In the **Nemenyi** diagram each dot is one of the 112 configurations ordered by mean rank. Those inside the critical-difference band (89.4) are not statistically distinguishable from the best."
 },
 {
 "q": [
-"qué muestra la sección modelos",
-"qué hay en modelos",
-"what is in the models section"
+"qué muestra la predicción en vivo",
+"what does the live prediction show"
 ],
-"es": "*Modelos* tiene ocho pestañas: tabla de líderes (12 modelos con log-loss, F1 y AUC como media ± DE e IC 95 %), predicción en vivo con SHAP, diagnóstico (confusión, calibración, ROC y precisión-recall), interpretabilidad global, comparación estadística (diagrama de diferencia crítica y 223 contrastes con Holm), modelo original (pseudocódigo, convergencia, pruebas, robustez y veredicto), ficha del modelo y los resultados del entregable 2.",
-"en": "*Models* has eight tabs: leaderboard (12 models with log-loss, F1 and AUC as mean ± SD and 95 % CI), live prediction with SHAP, diagnostics (confusion, calibration, ROC and precision-recall), global interpretability, statistical comparison (critical difference diagram and 223 Holm-corrected tests), original model (pseudocode, convergence, tests, robustness and verdict), model card and the deliverable 2 results."
-},
-{
-"q": [
-"qué es regionalmapem",
-"cuál es el modelo propio",
-"qué es el modelo original",
-"what is regionalmapem",
-"what is the original model"
-],
-"es": "**RegionalMAPEM** es el modelo propio: combina las probabilidades de 11 clasificadores calibrados con pesos distintos en cada región del espacio de clientes. Las regiones salen de un GMM y los pesos se estiman con MAP-EM y un prior de Dirichlet hacia los pesos globales. En Telco empata con la logística con splines y no cumple la definición de superioridad. Míralo en *Modelos → Modelo original*.",
-"en": "**RegionalMAPEM** is our own model: it combines the probabilities of 11 calibrated classifiers with different weights in each region of the customer space. Regions come from a GMM and weights are estimated with MAP-EM and a Dirichlet prior towards the global weights. On Telco it ties with logistic regression with splines and does not meet the superiority definition. See *Models → Original model*."
-},
-{
-"q": [
-"qué es el log-loss",
-"por qué log-loss",
-"what is log-loss"
-],
-"es": "El **log-loss** es el promedio de −log de la probabilidad asignada a la clase real: castiga más las predicciones seguras y equivocadas. Se eligió como métrica principal porque el objetivo es entregar probabilidades bien calibradas, no solo ordenar a los clientes.",
-"en": "**Log-loss** is the average of −log of the probability given to the true class: it punishes confident wrong predictions the most. It is the main metric because the goal is well-calibrated probabilities, not just ranking customers."
+"es": "La *Predicción en vivo* (en *Modelos finales*) usa el esquema de entrada guardado de cada modelo: ingresas o cargas un cliente y obtienes su probabilidad calibrada de abandono, la decisión según el umbral de alerta, el conjunto conforme al 90 % y la explicación SHAP local.",
+"en": "The *Live prediction* (in *Final models*) uses each model's saved input schema: you enter or load a customer and get the calibrated churn probability, the decision at the alert threshold, the 90 % conformal set and the local SHAP explanation."
 },
 {
 "q": [
@@ -460,17 +436,16 @@
 "qué es la cuadrícula de 100 clientes",
 "what is the 100 customer grid"
 ],
-"es": "En *Modelos → Entregable 2 → Umbral de alerta*, la cuadrícula representa 100 clientes del test: abandonos detectados, abandonos que se escapan (borde punteado), falsas alertas y clientes estables bien leídos. Al mover el umbral cambian las proporciones y el punto en la curva ROC.",
-"en": "In *Models → Deliverable 2 → Alert threshold*, the grid represents 100 test customers: churners caught, churners missed (dashed border), false alarms and stable customers read correctly. Moving the threshold changes the proportions and the point on the ROC curve."
+"es": "En *Umbral de alerta*, la cuadrícula representa 100 clientes del test: abandonos detectados, abandonos que se escapan (borde punteado), falsas alertas y clientes estables bien leídos. Al mover el umbral cambian las proporciones y el punto en la curva ROC.",
+"en": "In *Alert threshold*, the grid represents 100 test customers: churners caught, churners missed (dashed border), false alarms and stable customers read correctly. Moving the threshold changes the proportions and the point on the ROC curve."
 },
 {
 "q": [
-"dónde está la ficha del modelo",
-"model card",
-"where is the model card"
+"qué muestra la sección de conclusiones",
+"what is in the conclusions section"
 ],
-"es": "La ficha del modelo está en *Modelos → Ficha del modelo*: uso previsto, datos de entrenamiento, métricas, limitaciones, riesgos y usos no recomendados, junto con los datos del artefacto cargado (semilla, versiones, hiperparámetros y su metadata.json).",
-"en": "The model card is in *Models → Model card*: intended use, training data, metrics, limitations, risks and non-recommended uses, plus the loaded artifact details (seed, versions, hyperparameters and its metadata.json)."
+"es": "*Conclusiones* reúne los hallazgos principales, las limitaciones, los próximos pasos y el enlace al paper del proyecto.",
+"en": "*Conclusions* gathers the main findings, limitations, next steps and the link to the project paper."
 },
 {
 "q": [
@@ -488,8 +463,8 @@
 "linkedin",
 "how do i contact the authors"
 ],
-"es": "Al final de *Contexto* están las fotos de Laura y Natalý con sus enlaces de **LinkedIn**, GitHub y correo, además de los repositorios, el dataset y el paper.",
-"en": "The end of *Context* has Laura's and Natalý's photos with their **LinkedIn**, GitHub and email links, plus the repositories, the dataset and the paper."
+"es": "En la sección *Autoras* están las fotos de Laura y Natalý con sus enlaces de **LinkedIn**, GitHub y correo, además de los repositorios, el dataset y el paper.",
+"en": "The *Authors* section has Laura's and Natalý's photos with their **LinkedIn**, GitHub and email links, plus the repositories, the dataset and the paper."
 },
 {
 "q": [

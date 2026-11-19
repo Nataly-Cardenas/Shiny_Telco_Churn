@@ -1,17 +1,171 @@
-# Sección 2 · EDA: filtros globales, distribución del objetivo, univariado, bivariado, explorador bivariado,
-# multivariado, faltantes, resumen, preparación de datos y explorador con descarga (pages/eda.py del dash).
+# Portada, 1. Introducción y 2. Análisis exploratorio.
 
-NAV <- list(c("contexto", N("Contexto"), "signal"), c("eda", N("EDA"), "chart"), c("modelos", N("Modelos"), "trophy"))
-TITLES <- setNames(lapply(NAV, `[`, 2), vapply(NAV, `[`, "", 1))
+NAV <- list(c("introduccion", N("Introducción"), "signal"), c("eda", N("Análisis exploratorio"), "chart"), c("preprocesamiento", N("Preprocesamiento"), "flask"),
+            c("modelado", N("Modelado avanzado"), "trophy"), c("modelos_ml", N("Modelos finales"), "network"), c("conclusiones", N("Conclusiones"), "flag"),
+            c("autoras", N("Autoras"), "users"))
+TITLES <- c(list(inicio = N("Inicio")), setNames(lapply(NAV, `[`, 2), vapply(NAV, `[`, "", 1)))
+CHAPTER <- list(introduccion = "intro", eda = "EDA_", preprocesamiento = "PREPROCESAMIENTO", modelado = "MODELADO_AVANZADO")
 DATA_PAGES <- "eda"
-EXPLORABLES <- c(NUMERIC, "SeniorCitizen")
+
+# ---------------------------------------------------------------- portada
+# Señales del perfil asociadas a más (▲) o menos (▼) abandono en el EDA.
+flags <- function(c) {
+  out <- c(if (c$Contract == "Month-to-month") paste("▲", T("Contrato mes a mes")), if (c$Contract == "Two year") paste("▼", T("Contrato a dos años")),
+           if (c$InternetService == "Fiber optic") paste("▲", T("Fibra óptica")), if (c$PaymentMethod == "Electronic check") paste("▲", T("Paga con cheque electrónico")),
+           if (c$tenure <= 12) paste("▲", T("Menos de un año como cliente")), if (c$tenure > 48) paste("▼", T("Más de 4 años como cliente")),
+           if (c$TechSupport == "No") paste("▲", T("Sin soporte técnico")), if (c$OnlineSecurity == "Yes") paste("▼", T("Con seguridad en línea")))
+  utils::head(out, 4)
+}
+
+# 30 clientes reales del hold-out, mezclando riesgo alto, medio y bajo según RegionalMAPEM (los mismos del dash, misma semilla).
+COVER_ROWS <- as.data.frame(jsonlite::fromJSON(file.path(DATA, "portada_clientes.json")))
+
+cover_customers <- function() {
+  lapply(seq_len(nrow(COVER_ROWS)), function(i) {
+    c <- rows(COVER_ROWS$row_id[i])
+    list(id = c$customerID, contract = cat_name(c$Contract), internet = cat_name(c$InternetService), payment = cat_name(c$PaymentMethod),
+         tenure = c$tenure, monthly = c$MonthlyCharges, prob = round(COVER_ROWS$prob[i], 3), churn = c$target, flags = I(as.character(flags(c))))
+  })
+}
+
+phone <- function() {
+  text <- list(months = T("meses"), risk = list(alto = T("Riesgo alto"), medio = T("Riesgo medio"), bajo = T("Riesgo bajo")),
+               churned = T("En la realidad: abandonó"), stayed = T("En la realidad: permaneció"),
+               toast = list(alto = T("Alerta de retención enviada"), medio = T("Cliente en observación"), bajo = T("Cliente estable")))
+  div(class = "phone-stage", div(
+    id = "phone", class = "phone", `data-customers` = jsonlite::toJSON(cover_customers(), auto_unbox = TRUE), `data-text` = jsonlite::toJSON(text, auto_unbox = TRUE),
+    div(class = "phone-status", tags$span("9:41"), tags$span(class = "sig", tags$b(), tags$b(), tags$b(), tags$b()), tags$span(class = "bat", "5G")),
+    div(class = "phone-body",
+        div(class = "between", tags$span(class = "pc-app", T("TELCO · RADAR DE CLIENTES")), tags$span(class = "pc-live", T("EN VIVO"))),
+        div(class = "pc-row", tags$small(T("Cliente")), tags$strong(class = "pc-id")),
+        div(class = "pc-pills", tags$span(class = "pc-contract pill"), tags$span(class = "pc-internet pill"), tags$span(class = "pc-payment pill")),
+        div(class = "pc-grid", div(tags$small(T("Antigüedad")), tags$strong(class = "pc-tenure")), div(tags$small(T("Cargo mensual")), tags$strong(class = "pc-monthly"))),
+        div(class = "pc-signals", tags$small(T("Señales del perfil")), tags$ul(class = "pc-flags")),
+        div(class = "pc-risk",
+            div(class = "ring", div(class = "ring-label", tags$strong(class = "ring-pct"), tags$small(T("prob. de abandono")))),
+            div(class = "pc-verdict", tags$strong(class = "pc-level"), tags$small(T("RegionalMAPEM · hold-out")), tags$small(class = "pc-truth"))),
+        div(class = "toast", tags$span(class = "toast-dot"), tags$span(class = "toast-text")))))
+}
+
+cover <- function() {
+  div(class = "cover",
+      tags$canvas(id = "net-canvas", class = "net-canvas"),
+      div(class = "cover-glow"),
+      div(class = "cover-inner",
+          div(class = "cover-text",
+              eyebrow("TELCO CUSTOMER CHURN · UNIVERSIDAD DEL NORTE"),
+              tags$h1(class = "cover-title", T("Señal"), tags$br(), tags$span(class = "glitch", `data-text` = T("perdida"), T("perdida"))),
+              tags$p(class = "cover-lead", T("Uno de cada cuatro clientes "), tags$b(T("cuelga para siempre"), .noWS = "outside"), T(". Descubre quiénes son, por qué se van y cómo anticiparlo con datos.")),
+              div(class = "cover-stats",
+                  div(counter(7043), tags$small(T("clientes analizados"))),
+                  div(class = "hot", counter(26.5, 1, " %"), tags$small(T("abandonan el servicio"))),
+                  div(counter(12), tags$small(T("modelos finales comparados"))),
+                  div(counter(0.41127, 5), tags$small(T("log-loss de RegionalMAPEM")))),
+              tags$p(class = "cover-verdict muted", tags$b(T("Veredicto: ")), T("el modelo propio empata con la mejor referencia (logística con splines, 0.41130); no la supera de forma significativa.")),
+              div(class = "cover-cta",
+                  tags$a(class = "btn primary", href = "#introduccion", T("Entrar al dashboard"), " →"),
+                  tags$a(class = "btn ghost", href = BOOK, target = "_blank", T("Jupyter Book"), icon("arrow", "sm"))),
+              div(class = "cover-hint", icon("cursor"),
+                  tags$span(T("Los puntos rojos son clientes a punto de irse: "), tags$b(T("pasa el cursor (o el dedo) sobre ellos para retenerlos."))),
+                  tags$span(class = "score", T("Perdidos: "), tags$b(id = "cover-lost", "0"), " · ", T("Retenidos por ti: "), tags$b(id = "cover-saved", "0")))),
+          phone()),
+      div(class = "cover-foot", "Laura S. Rivera Figueredo · Natalý A. Cárdenas Izaquita"))
+}
+
+# ================================================================ 1. INTRODUCCIÓN
+FLIP <- list(c("target", N("Abandono y clasificación binaria"), N("El churn es la cancelación del servicio. Se estima para cada cliente la probabilidad P(abandono | x) y se separa a quienes se van (1) de quienes permanecen (0).")),
+             c("chart", N("Análisis exploratorio"), N("Antes de modelar se mide la asociación de cada variable con el abandono: correlación punto-biserial, V de Cramér y Spearman, con corrección de Holm.")),
+             c("scale", N("Desbalance de clases"), N("Solo el 26.5 % abandona. SMOTE y ADASYN crean ejemplos sintéticos de la minoría para que el modelo no la ignore.")),
+             c("block", N("Fuga de información"), N("Imputar, codificar, escalar y balancear solo con datos de entrenamiento; si no, las métricas resultan optimistas.")),
+             c("tree", N("Modelos de clasificación"), N("Regresión logística como modelo base, frente a KNN, Naive Bayes, árbol de decisión, Random Forest, XGBoost y SVM.")),
+             c("repeat", N("Validación cruzada anidada"), N("Un bucle interno elige hiperparámetros con Grid, Random, TPE o un algoritmo genético; uno externo mide el desempeño con datos que no intervinieron.")),
+             c("sigma", N("Métricas"), N("F1 = 2TP / (2TP + FP + FN) equilibra detectar abandonos y evitar falsas alertas; AUC-ROC mide qué tan bien se ordena el riesgo. Friedman, Nemenyi y DeLong comparan modelos.")),
+             c("bulb", N("Interpretabilidad"), N("SHAP reparte cada predicción entre las variables y LIME explica casos individuales. Describen al modelo, no causas del abandono.")))
+OBJECTIVES <- list(c(N("Describir el problema y los datos"), N("Caracterizar el conjunto, su calidad y el desbalance de la variable objetivo.")),
+                   c(N("Reservar un conjunto de prueba"), N("Separar un hold-out estratificado de 1,409 clientes (semilla 42) antes de cualquier ajuste.")),
+                   c(N("Identificar los perfiles de abandono"), N("Analizar cada variable y su asociación con el abandono para encontrar los segmentos con más cancelaciones.")),
+                   c(N("Preparar los datos sin fuga de información"), N("Ajustar imputación, codificación y escalado dentro de cada pliegue, solo con datos de entrenamiento.")),
+                   c(N("Comparar once modelos de referencia"), N("Optimizarlos con el mismo presupuesto (TPE, 30 evaluaciones), calibrarlos con Platt y compararlos con validación anidada 5 × 5 y log-loss.")),
+                   c(N("Proponer un modelo propio"), N("Programar RegionalMAPEM, que pondera expertos calibrados según la región del cliente con pesos estimados por MAP-EM.")),
+                   c(N("Verificar con pruebas estadísticas"), N("Contrastar al modelo propio con los benchmarks (223 comparaciones con Holm) y con tres conjuntos de churn adicionales.")),
+                   c(N("Poner los resultados a disposición"), N("Presentar el análisis en un Jupyter Book, un paper, una ficha del modelo y este tablero interactivo.")))
+PIPELINE <- list(c("table", N("1 · ETL"), N("Limpieza por filas y partición 80/20 estratificada; el preprocesamiento va dentro del pipeline.")),
+                 c("chart", N("2 · EDA"), N("Distribuciones y asociaciones con el abandono, con corrección de Holm, solo sobre desarrollo.")),
+                 c("tree", N("3 · Modelos de referencia"), N("Once modelos calibrados con Platt, incluidos los métodos recientes.")),
+                 c("hourglass", N("4 · Optimización"), N("TPE con 30 evaluaciones por modelo y pliegue, el mismo presupuesto para todos.")),
+                 c("repeat", N("5 · Validación anidada"), N("5 repeticiones × 5 pliegues externos; el log-loss es la métrica principal.")),
+                 c("scale", N("6 · Comparación estadística"), N("Friedman, Nemenyi, pruebas por pares y bayesiana; 223 comparaciones con Holm.")),
+                 c("network", N("7 · Modelo original"), N("RegionalMAPEM: pesos por región estimados con MAP-EM.")),
+                 c("layers", N("8 · Evaluación ampliada"), N("Tres conjuntos adicionales, robustez, calibración, escalabilidad y veredicto.")))
+GROUPS <- list(list(N("Identificador"), "customerID"), list(N("Demografía"), c("gender", "SeniorCitizen", "Partner", "Dependents")),
+               list(N("Servicios"), c("PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies")),
+               list(N("Cuenta"), c("tenure", "Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges", "TotalCharges")), list(N("Objetivo"), "Churn"))
+
+people_row <- function() {
+  leaving <- c(2, 7, 11, 16, 19)   # 5 de 20 ≈ 26.5 % de abandono
+  div(class = "people", lapply(0:19, function(i) tags$span(class = paste0("person", if (i %in% leaving) " leaving" else ""), style = sprintf("animation-delay:%.1fs", (i %% 5) * .9))))
+}
+
+introduccion <- function(d) {
+  variables <- do.call(rbind, lapply(GROUPS, function(g) do.call(rbind, lapply(g[[2]], function(v) df(
+    Grupo = T(g[[1]]), Variable = v,
+    Significado = if (v %in% names(LABELS)) label(v) else if (v == "customerID") T("Código del cliente") else T("Abandono durante el último mes"),
+    Tipo = if (v %in% NUMERIC) T("Numérica") else if (v == "customerID") T("Identificador") else T("Categórica"),
+    Papel = if (v == "Churn") T("Objetivo") else if (v == "customerID") T("No predictor") else T("Candidato"))))))
+  tagList(
+    page_head("introduccion", T("Retener a un cliente cuesta menos que conseguir uno nuevo. Este proyecto busca anticipar quién está por cancelar su servicio para actuar a tiempo.")),
+    div(class = "hero",
+        div(class = "hero-text", eyebrow(T("CONTEXTO DEL PROBLEMA")), tags$h2(T("1 de cada 4 clientes "), tags$span(class = "txt-hot", T("se desconecta"))),
+            tags$p(T(paste0("El conjunto Telco Customer Churn de IBM reúne servicios contratados, datos de cuenta y perfil demográfico de cada cliente, ",
+                            "junto con si canceló en el último mes. Dos dificultades: los que se van son minoría, y los datos son una foto de un momento, ",
+                            "así que los hallazgos son asociaciones y no causas."))), people_row()),
+        kpis(kpi(T("CLIENTES"), 7043, T("una fila por cliente")), kpi(T("ABANDONOS"), 1869, T("cancelaron en el último mes")),
+             kpi(T("TASA DE ABANDONO"), 26.5, T("la clase minoritaria"), "hot", 1, " %"), kpi(T("VARIABLES"), 19, T("predictoras candidatas")), cls = "k2")),
+    subhead(T("Problema y relevancia")),
+    card(tags$p(class = "big-text", T("La fuga de clientes es una de las principales fuentes de pérdida de ingresos en telecomunicaciones: retener a un cliente cuesta menos que adquirir uno nuevo y los contratos de servicio generan ingresos recurrentes "),
+                tags$a("(Verbeke et al., 2012; ", href = "https://doi.org/10.1016/j.ejor.2011.09.031", target = "_blank", .noWS = "outside"), tags$a("Neslin et al., 2006)", href = "https://doi.org/10.1509/jmkr.43.2.204", target = "_blank", .noWS = "outside"),
+                T(". Un buen modelo permite dirigir las campañas de retención a quienes tienen mayor riesgo, siempre que sus probabilidades estén bien calibradas. En estos datos, el 26.5 % de los clientes abandonó en el último mes.")),
+         tags$p(class = "muted", T(paste0("Verbeke, W., Dejaeger, K., Martens, D., Hur, J. y Baesens, B. (2012). New insights into churn prediction in the telecommunication sector: a profit driven data mining approach. European Journal of Operational Research, 218(1), 211–229. ",
+                                          "Neslin, S. A., Gupta, S., Kamakura, W., Lu, J. y Mason, C. H. (2006). Defection detection: measuring and understanding the predictive accuracy of customer churn models. Journal of Marketing Research, 43(2), 204–211.")))),
+    subhead(T("Pregunta de investigación")),
+    card(cls = "glow", tags$p(class = "big-text", T("¿Combinar los once modelos de referencia calibrados con pesos que dependen de la región del cliente reduce, de forma estadísticamente significativa, el log-loss frente al mejor modelo de referencia individual en la predicción de abandono?"))),
+    subhead(T("Objetivo general")),
+    card(cls = "glow", tags$p(class = "big-text", T(paste0("Identificar a los clientes de una empresa de telecomunicaciones con mayor riesgo de abandonar el servicio y los factores asociados a ese abandono, ",
+                                                       "y evaluar con un protocolo reproducible si un modelo propio de combinación por regiones (RegionalMAPEM) mejora, con respaldo estadístico, a los modelos de referencia.")))),
+    subhead(T("Objetivos específicos")),
+    div(class = "objectives", lapply(seq_along(OBJECTIVES), function(i) div(class = "obj", tags$span(class = "obj-n", sprintf("%02d", i)), tags$h4(T(OBJECTIVES[[i]][1])), tags$p(T(OBJECTIVES[[i]][2]))))),
+    subhead(T("Datos"), T("Ficha del conjunto principal.")),
+    card(div(class = "facts", lapply(list(c(T("Fuente"), T("IBM, publicado como conjunto de muestra en Kaggle (Telco Customer Churn)")), c(T("Tamaño"), T("7,043 clientes · 21 columnas (19 predictoras)")),
+                                          c(T("Variable objetivo"), T("Churn: se dio de baja en el último mes (26.5 %)")), c(T("Tipo de tarea"), T("Clasificación binaria con clases desbalanceadas")),
+                                          c(T("Periodo"), T("Sin periodo de recolección declarado: una fotografía de corte transversal de un operador ficticio")),
+                                          c(T("Licencia"), T("La de la publicación en Kaggle; datos de muestra de IBM para uso educativo y de demostración"))),
+                                     function(f) div(tags$small(f[1]), tags$strong(f[2]))))),
+    subhead(T("Pipeline del proyecto"), T("De los datos crudos a la evaluación del modelo original.")),
+    div(class = "repro", lapply(PIPELINE, function(r) div(class = "station", tags$span(class = "st-icon", icon(r[1])), tags$h4(T(r[2])), tags$p(T(r[3]))))),
+    subhead(T("Marco teórico"), T("Pasa el cursor (o toca) cada tarjeta para voltearla.")),
+    div(class = "flips", lapply(FLIP, function(f) div(class = "flip", tabindex = "0", div(class = "flip-inner",
+        div(class = "flip-front", tags$span(class = "flip-icon", icon(f[1])), tags$h4(T(f[2]))),
+        div(class = "flip-back", tags$h4(T(f[2])), tags$p(T(f[3]))))))),
+    subhead(T("Descripción de las variables del proyecto"), T("Diccionario resumido de los metadatos de Kaggle.")),
+    card(table_ui(variables, page_size = 21)),
+    subhead(T("Limitaciones, ética y autoras")),
+    grid(card(eyebrow(T("LIMITACIONES")), tags$ul(lapply(c("Un solo conjunto principal: las conclusiones confirmatorias son sobre Telco; tres conjuntos adicionales dan consistencia.",
+                                                          "Los datos son sintéticos, de un solo operador y sin dimensión temporal: no se trasladan a otros mercados sin validarlos.",
+                                                          "Los hallazgos son asociaciones, no causas.", "Sin costos de intervención, el log-loss no se traduce en dinero."), function(x) tags$li(T(x))))),
+         card(eyebrow(T("ÉTICA")), tags$ul(lapply(c("Los datos no contienen información personal real.", "El modelo es una herramienta de apoyo: no reemplaza la revisión humana antes de actuar sobre un cliente.",
+                                                    "Usos no recomendados y consideraciones éticas en la ficha del modelo (Modelos finales)."), function(x) tags$li(T(x)))),
+              tags$p(class = "muted", T("Autoras: Laura S. Rivera Figueredo y Natalý A. Cárdenas Izaquita · Universidad del Norte.")),
+              tags$p(class = "muted", T("Versión 1.0 · protocolo-v1 · actualizado el 17 de noviembre de 2026.")))))
+}
 
 # ================================================================ 2. ANÁLISIS EXPLORATORIO
-EDA_TABS <- c(N("1 · ETL y partición"), N("2 · Univariado"), N("3 · Bivariado"), N("4 · Explorador bivariado"), N("5 · Multivariado"), N("6 · Valores faltantes"),
-              N("7 · Resumen"), N("8 · Preparación de datos"), N("9 · Explorador de datos"))
+# Nombre del eje con sus unidades.
+unit <- function(var) switch(var, tenure = T("Antigüedad (meses)"), MonthlyCharges = T("Cargo mensual ($)"), TotalCharges = T("Cargo acumulado ($)"),
+                             AvgChargePerMonth = T("Cargo promedio mensual ($)"), label(var))
+EDA_TABS <- c(N("1 · ETL y partición"), N("2 · Univariado"), N("3 · Bivariado"), N("4 · Multivariado"), N("5 · Valores faltantes"), N("6 · Resumen"), N("7 · Explorador de datos"))
 
-eda_page <- function(tab = 0) {
-  tagList(page_head(T("Análisis exploratorio"), T("Del archivo original a los patrones de abandono. Todo el análisis se hace sobre el conjunto de entrenamiento; los filtros superiores recalculan las gráficas y tablas."), "EDA_"),
+eda_page <- function(d, tab = 0) {
+  tagList(page_head("eda", T("Del archivo original a los patrones de abandono. Todo el análisis se hace sobre el conjunto de entrenamiento; los filtros superiores recalculan las gráficas y tablas.")),
           uiOutput("eda-summary"),
           tabs("eda-tabs", T(EDA_TABS), tab))
 }
@@ -20,8 +174,7 @@ eda_kpis <- function(d) {
   if (!nrow(d)) return(empty())
   tagList(scope(d),
           kpis(kpi(T("CLIENTES"), nrow(d), T("en la selección")), kpi(T("ABANDONO"), round(mean(d$target) * 100, 2), fmt(T("{n} clientes"), n = f0(sum(d$target))), "hot", 2, " %"),
-               kpi(T("ANTIGÜEDAD MEDIA"), round(mean(d$tenure), 1), T("meses"), "", 1), kpi(T("CARGO MENSUAL MEDIO"), round(mean(d$MonthlyCharges), 2), T("dólares"), "", 2, "", "$")),
-          note(T("Sin fechas en los datos"), T("El conjunto es una fotografía de corte transversal: no hay una variable de fecha para filtrar por periodo. Los filtros usan partición, contrato, internet y antigüedad.")))
+               kpi(T("ANTIGÜEDAD MEDIA"), round(mean(d$tenure), 1), T("meses"), "", 1), kpi(T("CARGO MENSUAL MEDIO"), round(mean(d$MonthlyCharges), 2), T("dólares"), "", 2, "", "$")))
 }
 
 eda_tab <- function(i, d, input) {
@@ -48,21 +201,62 @@ eda_tab <- function(i, d, input) {
             subhead(T("Variable objetivo vs variables categóricas")),
             card(cls = "controls-card", field(T("Variable"), dropdown("bi-cat", CATEGORICAL, keep("bi-cat", "Contract"), cat_opts)), uiOutput("bi-cat-output")),
             uiOutput("bi-holm-output")),
-    card(cls = "controls-card", div(class = "controls",
-         field(T("Eje X"), dropdown("xy-x", c(EXPLORABLES, CATEGORICAL), keep("xy-x", "tenure"), setNames(as.list(c(EXPLORABLES, CATEGORICAL)), c(EXPLORABLES, CATEGORICAL)))),
-         field(T("Eje Y"), dropdown("xy-y", EXPLORABLES, keep("xy-y", "MonthlyCharges"), setNames(as.list(EXPLORABLES), EXPLORABLES))),
-         field(T("Color"), dropdown("xy-color", c("Churn", CATEGORICAL), keep("xy-color", "Churn"), c(list(Churn = T("Abandono")), cat_opts)))),
-         uiOutput("xy-output")),
     multi_output(d),
     missing_output(d),
     eda_summary(),
-    preparacion(),
+    tagList(
+    card(cls = "controls-card", div(class = "controls",
+         field(T("Eje x"), dropdown("free-x", EJES, keep("free-x", "tenure"), setNames(lapply(EJES, unit), EJES))),
+         field(T("Eje y"), dropdown("free-y", EJES, keep("free-y", "MonthlyCharges"), setNames(lapply(EJES, unit), EJES))),
+         field(T("Color"), dropdown("free-color", c("Churn", CATEGORICAL), keep("free-color", "Churn"), c(list(Churn = T("Abandono")), setNames(lapply(CATEGORICAL, unit), CATEGORICAL))))),
+         uiOutput("free-output")),
     card(cls = "controls-card", field(T("Columnas visibles"), dropdown("explorer-cols", RAW_COLS, keep("explorer-cols", c("customerID", "Contract", "InternetService", "tenure", "MonthlyCharges", "Churn")),
                                                                   setNames(as.list(RAW_COLS), RAW_COLS), multi = TRUE)),
          uiOutput("explorer-table"),
          div(class = "export-row", downloadLink("export", class = "btn primary", icon("download"), T("Descargar CSV")),
-             tags$p(class = "muted", T("Descarga un solo archivo con la selección actual de los filtros superiores y las columnas elegidas.")))))
+             tags$p(class = "muted", T("Descarga un solo archivo con la selección actual de los filtros superiores y las columnas elegidas."))))))
   tab_body(body)
+}
+
+# Explorador libre: dispersión entre dos numéricas, cajas entre numérica y categórica o conteos entre dos categóricas.
+EJES <- c(NUMERIC, CATEGORICAL)
+PX_COLORS <- c("#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A", "#19D3F3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52")   # paleta por defecto de plotly express
+free_output <- function(x, y, color, d) {
+  if (!nrow(d)) return(empty())
+  val <- function(c) if (c == "Churn") churn_label(d$Churn) else if (c %in% NUMERIC) d[[c]] else as.character(cat_name(d[[c]]))
+  g <- val(color)
+  niveles <- if (color == "Churn") T(c("Permanece", "Abandona")) else unique(g)
+  paleta <- if (color == "Churn") outcome_colors() else setNames(rep(PX_COLORS, 3)[seq_along(niveles)], niveles)
+  nombre_c <- if (color == "Churn") T("Abandono") else unit(color)
+  f <- plot_ly()
+  if (x %in% NUMERIC && y %in% NUMERIC) {
+    set.seed(0); i <- sample(nrow(d), min(2000, nrow(d)))
+    for (k in niveles) { m <- i[g[i] == k & !is.na(d[[x]][i]) & !is.na(d[[y]][i])]
+      f <- add_trace(f, type = "scatter", mode = "markers", x = d[[x]][m], y = d[[y]][m], name = k, legendgroup = k, marker = list(color = paleta[[k]], opacity = .6)) }
+    f <- layout(f, xaxis = list(title = unit(x)), yaxis = list(title = unit(y)), legend = list(title = list(text = nombre_c)))
+    rho <- suppressWarnings(stats::cor(d[[x]], d[[y]], method = "spearman", use = "pairwise.complete.obs"))
+    note_ <- fmt(T("Muestra de hasta 2,000 clientes de la selección. Spearman entre {x} y {y}: ρ = {r}."), x = unit(x), y = unit(y), r = sprintf("%.2f", rho))
+  } else if (x %in% NUMERIC || y %in% NUMERIC) {
+    n <- if (x %in% NUMERIC) x else y; k_ <- if (x %in% NUMERIC) y else x
+    kv <- val(k_)
+    for (k in niveles) { m <- g == k & !is.na(d[[n]])
+      f <- if (x %in% NUMERIC) add_trace(f, type = "box", x = d[[n]][m], y = kv[m], orientation = "h", name = k, marker = list(color = paleta[[k]]), line = list(color = paleta[[k]]))
+           else add_trace(f, type = "box", x = kv[m], y = d[[n]][m], name = k, marker = list(color = paleta[[k]]), line = list(color = paleta[[k]])) }
+    cats <- unique(kv)
+    f <- if (x %in% NUMERIC) layout(f, xaxis = list(title = unit(n)), yaxis = cat_axis(cats, title = unit(k_)), legend = list(title = list(text = nombre_c)))
+         else layout(f, xaxis = cat_axis(cats, title = unit(k_)), yaxis = list(title = unit(n)), legend = list(title = list(text = nombre_c)))
+    # boxmode existe en plotly.js aunque el esquema de plotly para R no lo declare: se fija al dibujar.
+    f <- htmlwidgets::onRender(f, "function(el) { Plotly.relayout(el, {boxmode: 'group'}); }")
+    note_ <- fmt(T("Cajas de {y} por categoría de {x}, separadas por {c}."), y = unit(n), x = unit(k_), c = nombre_c)
+  } else {
+    xv <- val(x); yv <- val(y); xs <- unique(xv); ys <- unique(yv)
+    z <- t(table(factor(xv, xs), factor(yv, ys))); z <- matrix(as.numeric(z), nrow = length(ys))
+    f <- add_trace(f, type = "heatmap", x = xs, y = ys, z = z, colorscale = list(list(0, "#16213a"), list(1, HOT)), texttemplate = "%{z}",
+                   colorbar = list(title = list(text = "count")), hovertemplate = paste0(unit(x), "=%{x}<br>", unit(y), "=%{y}<br>count=%{z}<extra></extra>")) %>%
+      layout(xaxis = cat_axis(xs, title = unit(x)), yaxis = cat_axis(ys, title = unit(y)))
+    note_ <- T("Número de clientes por combinación de categorías; el color de puntos no aplica entre dos categóricas.")
+  }
+  div(graph(f, 460, TRUE), tags$p(class = "insight", note_))
 }
 
 split_figure <- function() {
@@ -93,11 +287,12 @@ uni_num <- function(var, d) {
   s <- d[[var]][!is.na(d[[var]])]
   if (!length(s)) return(empty())
   h <- plot_ly() %>% add_trace(type = "histogram", x = s, nbinsx = 30, marker = list(color = BASE), name = T("Frecuencia")) %>%
-    layout(xaxis = list(title = var), yaxis = list(title = T("Clientes")))
-  b <- plot_ly() %>% add_trace(type = "box", y = s, name = var, marker = list(color = BASE), line = list(color = BASE), fillcolor = "rgba(46,134,171,.5)",
+    layout(xaxis = list(title = unit(var)), yaxis = list(title = T("Clientes")))
+  b <- plot_ly() %>% add_trace(type = "box", y = s, name = unit(var), marker = list(color = BASE), line = list(color = BASE), fillcolor = "rgba(46,134,171,.5)",
                                boxpoints = "outliers", quartilemethod = "linear")
   f <- subplots(list(h, b), c(T("Distribución"), T("Rango y cuartiles")), widths = c(.7, .3))
   f$x$layout$shapes <- list(vline(mean(s), HOT, "dash"))
+  f$x$layout$yaxis2$title <- list(text = unit(var))
   f$x$layout$annotations <- c(f$x$layout$annotations, list(list(text = fmt(T("media {m}"), m = sprintf("%.1f", mean(s))), x = mean(s), xref = "x", y = 1, yref = "y domain",
                                                                  xanchor = "left", yanchor = "top", showarrow = FALSE)))
   div(graph(f, 380, FALSE),
@@ -127,7 +322,7 @@ bi_num <- function(var, d) {
   ok <- !is.na(d[[var]])
   for (k in order) f <- add_trace(f, type = "box", x = lab[lab == k & ok], y = d[[var]][lab == k & ok], name = k, marker = list(color = cols[[k]]), line = list(color = cols[[k]]), fillcolor = if (k == order[1]) "rgba(46,134,171,.5)" else "rgba(228,87,46,.5)",
                                   boxpoints = "outliers", quartilemethod = "linear")
-  f <- layout(f, xaxis = cat_axis(order, title = ""), yaxis = list(title = var))
+  f <- layout(f, xaxis = cat_axis(order, title = ""), yaxis = list(title = unit(var)))
   h <- holm_family(d); num <- h$num
   g <- sort(unique(lab))
   by <- do.call(rbind, lapply(g, function(k) { x <- d[[var]][lab == k]; x <- x[!is.na(x)]; df(Estado = k, N = length(x), Media = mean(x), DS = stats::sd(x), Mediana = stats::median(x)) }))
@@ -247,54 +442,4 @@ eda_summary <- function() {
   tagList(chart(T("Categorías con mayores tasas de abandono"), f, T("La categoría con mayor tasa de cada variable; la línea punteada es el promedio general."), 420, FALSE),
           subhead(T("Decisiones que deja el EDA")),
           div(class = "objectives g3", lapply(seq_along(findings), function(i) div(class = "obj", tags$span(class = "obj-n", sprintf("%02d", i)), tags$p(T(findings[i]))))))
-}
-
-# ---------------------------------------------------------------- explorador bivariado: el usuario elige los ejes y la variable de color
-explorador_xy <- function(x, y, color, d) {
-  if (!nrow(d)) return(empty())
-  if (x == y) return(note(T("Elige dos variables distintas"), T("El eje X y el eje Y muestran la misma variable.")))
-  set.seed(42); s <- d[sample(nrow(d), min(2000, nrow(d))), , drop = FALSE]
-  s$.color <- if (color == "Churn") churn_label(s$Churn) else as.character(cat_name(s[[color]]))
-  niveles <- if (color == "Churn") T(c("Permanece", "Abandona")) else sort(unique(s$.color))
-  niveles <- niveles[niveles %in% s$.color]
-  paleta <- if (color == "Churn") outcome_colors() else setNames(rep(c(BASE, HOT, GREY), 10)[seq_along(niveles)], niveles)
-  simbolos <- setNames(rep(c("circle", "diamond", "square", "x", "triangle-up"), 4)[seq_along(niveles)], niveles)
-  f <- plot_ly()
-  if (x %in% CATEGORICAL) {
-    xs <- sort(unique(s[[x]]))
-    for (k in niveles) { m <- s$.color == k & !is.na(s[[y]])
-      f <- add_trace(f, type = "box", x = s[[x]][m], y = s[[y]][m], name = k, marker = list(color = paleta[[k]]), line = list(color = paleta[[k]]), boxpoints = FALSE, quartilemethod = "linear") }
-    f <- plotly_build(layout(f, xaxis = list(title = x, tickvals = xs, ticktext = as.character(cat_name(xs)), type = "category"), yaxis = list(title = y)))
-    f$x$layout$boxmode <- "group"   # plotly.js lo admite aunque el esquema de plotly para R no lo declare
-    insight <- fmt(T("Cajas de {y} por categoría de {x}, separadas por {c}."), y = y, x = x, c = if (color == "Churn") T("abandono") else color)
-  } else {
-    for (k in niveles) { m <- s$.color == k & !is.na(s[[x]]) & !is.na(s[[y]])
-      f <- add_trace(f, type = "scattergl", mode = "markers", x = s[[x]][m], y = s[[y]][m], name = k, marker = list(color = paleta[[k]], symbol = simbolos[[k]], size = 5, opacity = .5)) }
-    f <- layout(f, xaxis = list(title = x), yaxis = list(title = y))
-    rho <- suppressWarnings(stats::cor(s[[x]], s[[y]], method = "spearman", use = "pairwise.complete.obs"))
-    insight <- fmt(T("Muestra de hasta 2,000 clientes de la selección. Spearman entre {x} y {y}: ρ = {r}."), x = x, y = y, r = sprintf("%.2f", rho))
-  }
-  if (length(niveles) > 3 && color != "Churn") insight <- paste(insight, T("Con más de tres categorías, los símbolos distinguen los grupos que comparten color."))
-  div(graph(f, 460, TRUE), tags$p(class = "insight", insight))
-}
-
-# ---------------------------------------------------------------- preparación de datos (capítulo de preprocesamiento)
-STEPS <- list(c("target", N("Objetivo"), N("Churn Yes/No → 1/0. customerID solo para control.")), c("shield", N("TotalCharges"), N("Texto a número; los 8 vacíos de train (3 de test) tienen tenure 0 → 0.")),
-              c("layers", N("Ingeniería"), N("“Sin internet / sin teléfono” → “No” y AvgChargePerMonth = TotalCharges / tenure.")), c("table", N("Codificar y escalar"), N("5 numéricas con StandardScaler y 15 categóricas con One-Hot: 24 columnas.")),
-              c("scale", N("Calibrar"), N("Platt (sigmoide, 3 pliegues) dentro del entrenamiento de cada modelo; sin remuestreo.")), c("network", N("Modelo"), N("Se ajusta en entrenamiento y se evalúa en el pliegue reservado.")))
-
-preparacion <- function() {
-  m <- c(T("Imputar con 0"), T("Mediana + indicador")); a_ <- c(.8459, .8460)
-  fi <- plot_ly() %>% add_trace(type = "bar", x = m, y = a_, error_y = list(type = "data", array = c(.0124, .0125), color = GREY), marker = list(color = c(HOT, BASE))) %>%
-    bar_labels(a_, m, .802, 4, horizontal = FALSE) %>% layout(xaxis = cat_axis(m), yaxis = list(range = c(.8, .87), title = "AUC-ROC CV"))
-  b <- read("baseline_test.csv"); cm <- confusion(b$y_true, as.integer(b$probability >= .5)); r <- roc_curve(b$y_true, b$probability)
-  tagList(card(tags$h3(class = "chart-title", T("El pipeline paso a paso")),
-               div(class = "pipeline", div(class = "flow-line"), lapply(seq_along(STEPS), function(k) div(class = "station", style = sprintf("animation-delay:%.2fs", (k - 1) * .15),
-                   tags$span(class = "st-icon", icon(STEPS[[k]][1])), tags$h4(T(STEPS[[k]][2])), tags$p(T(STEPS[[k]][3])))))),
-          grid(chart(T("¿Cero o mediana para TotalCharges?"), fi, T("Diferencia pareada por fold: +0.0001 ± 0.0001. Imputar con 0 es coherente con clientes sin facturación y no pierde desempeño."), 320, FALSE),
-               card(tags$h3(class = "chart-title", T("Ingeniería de características")),
-                    kpis(kpi(T("CORRELACIÓN CON MONTHLYCHARGES"), .9963, "AvgChargePerMonth", "", 4), kpi(T("COLUMNAS TRAS CODIFICAR"), 24, T("5 numéricas + 19 indicadores")), cls = "k2"),
-                    tags$p(class = "insight", T("El cargo promedio mensual comparte casi toda la información con el cargo mensual; su aporte se evalúa en la ablación.")))),
-          grid(chart(T("Modelo base del entregable 2 · matriz de confusión en test"), conf_heat(cm, 18), T("Regresión logística con umbral 0.5: detecta 293 de 374 abandonos, con 286 falsas alertas."), 340, FALSE),
-               chart(T("Modelo base del entregable 2 · curva ROC en test"), roc_animation(list(list(name = T("Regresión logística"), fpr = r$fpr, tpr = r$tpr, color = BASE))), T("Pulsa play para trazar la curva. AUC = 0.8419."), 340)))
 }
