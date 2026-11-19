@@ -1,82 +1,93 @@
-# Señal perdida · Dashboard Telco Customer Churn (Shiny)
+# Señal perdida · Telco Customer Churn
 
-Dashboard predictivo en **R Shiny y Plotly** para el proyecto de abandono de clientes de **Laura S. Rivera Figueredo y Natalý A. Cárdenas Izaquita** (Universidad del Norte). Es la versión en R del dashboard publicado en https://telco-churn-dashboard-hom3.onrender.com (repositorio [Dash_Telco_Churn_ML](https://github.com/lauraformore/Dash_Telco_Churn_ML), rama `dash-original-con-ML`). Tiene las mismas secciones, gráficas, textos, colores, animaciones, asistente e idiomas, y predice en vivo con los mismos **12 modelos finales**: 11 benchmarks calibrados y el modelo propio, RegionalMAPEM. Todo el código de la aplicación es R.
+Dashboard interactivo en **R Shiny** para entender y anticipar el abandono de clientes de una empresa de telecomunicaciones. Recorre el proyecto completo: los datos, el análisis exploratorio, la preparación, la comparación de modelos y el modelo propio **RegionalMAPEM**. Además permite predecir en vivo la probabilidad de abandono de un cliente con los 12 modelos finales.
+
+Proyecto de **Laura S. Rivera Figueredo y Natalý A. Cárdenas Izaquita**, Ciencia de Datos, Universidad del Norte (Barranquilla, Colombia).
 
 ![Portada del dashboard](preview-desktop.png)
 
-- Jupyter Book: https://nataly-cardenas.github.io/Telco_Churn_JBook/ (capítulo 8: dashboard y despliegue)
-- Experimento y resultados: https://github.com/Nataly-Cardenas/Telco_Churn_JBook
-- Versión en Python (Dash): https://telco-churn-dashboard-hom3.onrender.com
+- **Dashboard en línea:** https://z2nlvx-n0taly-c0rdenas.shinyapps.io/telco-churn/
+- **Jupyter Book del proyecto:** https://nataly-cardenas.github.io/Telco_Churn_JBook/
+- **Código del experimento:** https://github.com/Nataly-Cardenas/Telco_Churn_JBook
 
-## Secciones
+## El problema
 
-| Ruta | Página | Contenido |
-|---|---|---|
-| `#inicio` | Portada | Red de clientes interactiva y un celular que muestra 30 clientes reales del hold-out con la probabilidad de RegionalMAPEM |
-| `#introduccion` | Introducción | Problema y relevancia, pregunta de investigación, objetivos, ficha de los datos, pipeline del proyecto, marco teórico, diccionario de variables, limitaciones y ética |
-| `#eda` | Análisis exploratorio | Filtros globales (partición, contrato, internet, antigüedad) y 7 pestañas: ETL y partición, univariado, bivariado, multivariado, valores faltantes, resumen, y explorador libre (ejes x, y y color a elección) con tabla y descarga CSV |
-| `#preprocesamiento` | Preprocesamiento | Pasos del pipeline, validación cruzada, ablación y evaluación del modelo base |
-| `#modelado` | Modelado avanzado | Podio y 7 pestañas: 112 configuraciones, calibración, optimizadores, multifidelidad, eficiencia computacional, comparación estadística e interpretabilidad |
-| `#modelos_ml` | Modelos finales | Tabla de líderes, predicción en vivo (umbral de alerta, conjunto conforme al 90 % y SHAP local), diagnóstico, interpretabilidad global, comparación estadística (diagrama de diferencia crítica y 223 contrastes con Holm), modelo original y ficha del modelo |
-| `#conclusiones` | Conclusiones | Veredicto sobre R1, R2 y R3, hallazgos, limitaciones, próximos pasos, reproducibilidad y paper |
-| `#autoras` | Autoras | Autoras, Jupyter Book y recursos |
+El conjunto *Telco Customer Churn* de IBM reúne, para 7,043 clientes, los servicios contratados, los datos de la cuenta y el perfil demográfico, junto con si el cliente canceló el servicio en el último mes. El 26.5 % de los clientes abandonó.
 
-Las secciones usan fragmentos de URL, así que admiten enlaces directos y los botones de atrás y adelante del navegador.
+El proyecto busca identificar a los clientes con más riesgo de irse y los factores asociados a ese riesgo, para dirigir las campañas de retención a tiempo. También evalúa, con un protocolo reproducible, si un modelo propio de combinación por regiones mejora a los modelos de referencia.
+
+**Resultado principal:** RegionalMAPEM (log-loss 0.41127) empata con el mejor modelo de referencia, la regresión logística con splines (0.41130). Ninguna prueba estadística encuentra diferencia tras la corrección de Holm.
+
+## Secciones del dashboard
+
+| Sección | Contenido |
+|---|---|
+| **Inicio** | Portada interactiva: una red de clientes y un celular que muestra clientes reales con su probabilidad de abandono |
+| **Introducción** | Problema y relevancia, pregunta de investigación, objetivos, ficha de los datos, pipeline del proyecto, marco teórico, diccionario de variables, limitaciones y ética |
+| **Análisis exploratorio** | Filtros por partición, contrato, internet y antigüedad. Siete pestañas: ETL y partición, análisis univariado, bivariado y multivariado, valores faltantes, resumen, y un explorador libre con descarga en CSV |
+| **Preprocesamiento** | Pasos del pipeline, validación cruzada, ablación y modelo base |
+| **Modelado avanzado** | 112 configuraciones (7 modelos × 4 balanceos × 4 optimizadores), calibración, optimizadores, multifidelidad, eficiencia computacional, comparación estadística e interpretabilidad (SHAP y LIME) |
+| **Modelos finales** | Tabla de líderes, predicción en vivo (probabilidad calibrada, umbral de alerta, conjunto conforme al 90 % y explicación SHAP), diagnóstico, interpretabilidad global, comparación estadística (Friedman, Nemenyi y 223 contrastes con Holm), modelo original y ficha del modelo |
+| **Conclusiones** | Veredicto sobre los requisitos R1, R2 y R3, hallazgos, limitaciones, próximos pasos, reproducibilidad y paper |
+| **Autoras** | Equipo y recursos del proyecto |
+
+El dashboard está en español e inglés, tiene modo claro y oscuro, e incluye a **Antena**, un asistente que responde preguntas sobre el proyecto y cada sección.
+
+## Los modelos
+
+Los 12 modelos finales se entrenaron con los 5,634 clientes de desarrollo: once modelos de referencia calibrados con Platt y RegionalMAPEM. Los modelos de referencia son regresión logística, regresión logística con splines, KNN, Naive Bayes, árbol de decisión, Random Forest, XGBoost, LightGBM, CatBoost, HistGradientBoosting y SVM.
+
+**RegionalMAPEM** combina las probabilidades de los once modelos con pesos que cambian según la región del cliente. Las regiones salen de una mezcla gaussiana sobre componentes principales, y los pesos se estiman por máxima posterior con EM, con un prior de Dirichlet que los acerca a los pesos globales.
+
+Los modelos entrenados están en `artifacts/`, y `src/modelos.R` los evalúa directamente en R para la predicción en vivo. El dashboard no entrena modelos: solo los carga.
 
 ## Ejecutar
 
 Requiere R 4.1 o superior.
 
 ```r
-source("install.R")   # una sola vez
+source("install.R")   # instala los paquetes una sola vez
 shiny::runApp()
 ```
 
-En RStudio basta con abrir la carpeta del proyecto y ejecutar esas dos líneas en la consola. Desde una terminal: `Rscript -e "shiny::runApp(port = 8050, launch.browser = TRUE)"`. En Windows, si `Rscript` no se reconoce, se usa la ruta completa, por ejemplo `"C:\Program Files\R\R-4.x.x\bin\Rscript.exe"`. Para publicar en shinyapps.io: `rsconnect::deployApp()`.
+Para publicarlo en shinyapps.io:
 
-## Modelos en R
+```r
+rsconnect::deployApp(appName = "telco-churn")
+```
 
-Los 12 artefactos del dash (`modelo.joblib` de scikit-learn, XGBoost, LightGBM y CatBoost) se convirtieron una sola vez a `artifacts/<modelo>/modelo.rds` con sus parámetros ajustados. Cada `.rds` guarda el escalado y el one-hot, los coeficientes, los árboles, los vectores de soporte, los B-splines y los calibradores de Platt. El de RegionalMAPEM guarda además los cuantiles, la PCA, el GMM de regiones y los pesos por región. `src/modelos.R` reimplementa en R la inferencia de cada modelo tal como la hace su librería original, incluida la comparación en precisión simple de los árboles. Por eso **las probabilidades coinciden con las del experimento**: la diferencia máxima es menor que 1e-7 en los 40 clientes de `artifacts/prueba_ida_y_vuelta.csv` y en el hold-out. Lo comprueba `tests/testthat/test-modelos.R`.
+## Estructura del repositorio
 
-- `scripts/convertir_artefactos.R` arma los `.rds` a partir de los parámetros exportados en JSON.
-- La explicación local reproduce el **Kernel SHAP de shap 0.48** que usa el dash. Toma los mismos 12 clientes de referencia, 100 coaliciones y la selección de 10 variables con LARS. El sorteo de coaliciones usa el mismo generador aleatorio de numpy (`np.random.seed(0)`, Mersenne Twister). Así, **los valores SHAP son los mismos que muestra el dash**; las pruebas lo verifican con el cliente de ejemplo.
-- El dashboard **nunca entrena**: solo carga los artefactos una vez por proceso.
+```
+app.R                    punto de entrada
+src/
+  app_ui.R, app_server.R   barra, filtros, pie y lógica del servidor
+  pages_eda.R              portada, introducción y análisis exploratorio
+  pages_model*.R           preprocesamiento y modelado avanzado
+  pages_modelos_ml.R       modelos finales y predicción en vivo
+  pages_other.R            conclusiones y autoras
+  modelos.R                carga de los modelos, predicción y SHAP
+  plots.R, components.R    gráficas, tablas y controles
+  analytics.R, eda.R       datos, cohortes y pruebas estadísticas
+  chatbot.R, i18n.R        asistente y traducción
+artifacts/               los 12 modelos finales y sus metadatos
+data/                    datos originales, resultados del experimento, ficha del modelo y de los datos
+www/                     estilos, animaciones e imágenes
+tests/                   pruebas automáticas
+```
 
-## Asistente: Antena
-
-El botón flotante abre a **Antena**, que saluda en voz alta (Web Speech API, `www/antena.js`). Responde sin límite de preguntas sobre el proyecto, sus datos y cada sección, con la base de conocimiento del dash (`data/faq.json`). Para perfiles concretos («tasa de abandono con fibra y mes a mes») calcula la cifra sobre el conjunto de entrenamiento. Si existe la variable de entorno `ANTHROPIC_API_KEY`, redacta las respuestas con Claude, y si la API falla vuelve a la respuesta local.
-
-## Idioma, tema y paleta
-
-Arriba a la derecha están los botones `ES | EN` y el cambio entre modo claro y oscuro; el navegador recuerda la elección. Las gráficas usan `#2E86AB` para todas las series, `#E4572E` para resaltar y `#9AA5B1` para referencias. Cada gráfica toma como alto máximo `min(alto, 100vh − 230 px)` para que quepa al proyectar en 1280 × 720.
-
-## Archivos
-
-- `app.R`: punto de entrada.
-- `src/app_ui.R`, `src/app_server.R`: barra, cinta, filtros, pie y lógica del servidor.
-- `src/pages_eda.R`: portada, Introducción y Análisis exploratorio.
-- `src/pages_model.R`, `src/pages_model_extra.R`: Preprocesamiento y Modelado avanzado.
-- `src/pages_modelos_ml.R`: Modelos finales.
-- `src/pages_other.R`: Conclusiones y Autoras.
-- `src/modelos.R`: carga de artefactos, validación del formulario, predicción y SHAP local.
-- `src/plots.R`, `src/components.R`: gráficas (gauge, ROC, calibración, diferencia crítica, cascada SHAP…), tarjetas, tablas y controles.
-- `src/analytics.R`, `src/eda.R`: datos, cohortes, resultados del experimento y pruebas estadísticas.
-- `src/chatbot.R`, `src/i18n.R`, `src/icons.R`: asistente, traducción e íconos.
-- `www/`: estilos y animaciones. `style.css`, `cover.js` y `antena.js` se copiaron sin cambios del dash y `.gitattributes` los marca como externos. `app.js` y `shiny.css` hacen que los controles de Shiny se vean y funcionen como los de Dash.
-- `artifacts/`: los 12 modelos (`modelo.rds`, `metadata.json`).
-- `data/`: datos originales, resultados del experimento (`resultados/`), `MODEL_CARD.md` y `DATA_STATEMENT.md`.
-
-## Verificar
+## Pruebas
 
 ```r
 testthat::test_dir("tests/testthat")
 ```
 
 Las pruebas comprueban:
-- la equivalencia de los 12 modelos con el experimento;
-- que el SHAP local coincida con el del dash;
-- la validación de entradas;
-- que todas las páginas y pestañas se generen en español e inglés;
-- las cifras del EDA, las traducciones y la paleta.
+- que las predicciones de los modelos coincidan con las del experimento;
+- la validación de los datos de entrada;
+- que todas las páginas se generen en ambos idiomas;
+- las cifras del análisis exploratorio, las traducciones y la paleta de colores.
 
-En Windows, si aparecen errores de codificación, hay que ejecutarlas con la configuración regional UTF-8.
+## Datos
+
+[Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn): conjunto de muestra de IBM, publicado en Kaggle, para uso educativo y de demostración. No contiene información personal real.
