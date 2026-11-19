@@ -61,7 +61,7 @@ test_that("modeling artifacts match the book", {
 test_that("charts use one color plus the highlight", {
   allowed <- toupper(c(BASE, HOT, GREY, "#0b1426", "#eaf2ff", "#8792a8", "#ffffff"))
   set_lang("es"); d <- rows(TRAIN_IDS)
-  html <- paste(render(eda_tab(3, d, list())), render(prep_tab(3)), render(model_output("random_forest", "Todos", "f1_positive")), render(threshold_output(FINALISTS[1], .5)))
+  html <- paste(render(eda_tab(3, d, list())), render(prep_tab(3)), render(model_output("random_forest", "Todos", "f1_positive")), render(diagnostico_salida(ORIGINAL, "holdout")), render(modelos_tab(0, list())))
   used <- unique(toupper(regmatches(html, gregexpr("#[0-9A-Fa-f]{6}\\b", html))[[1]]))
   expect_equal(setdiff(used, allowed), character())
 })

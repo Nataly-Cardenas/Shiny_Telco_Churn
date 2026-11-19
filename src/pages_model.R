@@ -22,24 +22,7 @@ pretty <- function(feature) vapply(feature, function(f) {
   name
 }, "", USE.NAMES = FALSE)
 
-# Curvas ROC que se trazan con un botón de play (mismo tipo de gráfica que el libro).
-roc_animation <- function(curves) {
-  steps <- 24; p <- plot_ly()
-  for (c in curves) p <- add_trace(p, type = "scatter", mode = "lines", x = c$fpr, y = c$tpr, name = c$name, line = list(color = c$color, width = if (c$color == HOT) 3 else 2.4))
-  p <- add_trace(p, type = "scatter", mode = "lines", x = c(0, 1), y = c(0, 1), name = T("Azar"), line = list(dash = "dash", color = GREY))
-  p <- layout(p, xaxis = list(title = T("Tasa de falsos positivos"), range = c(0, 1)), yaxis = list(title = T("Tasa de verdaderos positivos (Recall)"), range = c(0, 1.02)),
-              updatemenus = list(list(type = "buttons", showactive = FALSE, x = 1, y = -.18, xanchor = "right", buttons = list(list(
-                label = "▶", method = "animate", args = list(NULL, list(frame = list(duration = 45, redraw = FALSE), transition = list(duration = 0), fromcurrent = FALSE)))))))
-  p <- plotly_build(p)
-  p$x$frames <- lapply(seq_len(steps), function(k) list(name = as.character(k), traces = I(seq_along(curves) - 1),
-    data = lapply(curves, function(c) { n <- max(2, as.integer(length(c$fpr) * k / steps)); list(type = "scatter", x = c$fpr[seq_len(n)], y = c$tpr[seq_len(n)]) })))
-  p
-}
-
-conf_heat <- function(cm, size) {
-  heatmap(cm, c(T("Predice permanencia"), T("Predice abandono")), c(T("Permanece"), T("Abandona")), SEQ, textsize = size, showscale = FALSE) %>%
-    layout(yaxis = list(autorange = "reversed"), xaxis = list(tickangle = 0))
-}
+# roc_animation y conf_heat están en plots.R.
 
 # ================================================================ 3. PREPROCESAMIENTO
 STEPS <- list(c("target", N("Objetivo"), N("Churn Yes/No → 1/0. customerID solo para control.")), c("shield", N("TotalCharges"), N("Texto a número; los 8 vacíos de train (3 de test) tienen tenure 0 → 0.")),

@@ -1,8 +1,8 @@
 # Estructura fija de la página: barra superior, cinta, filtros, contenido, pie y asistente.
 
 TICKER <- c(N("Contrato mes a mes: 42.7 % de abandono"), N("Fibra óptica: 42.1 %"), N("Cheque electrónico: 45.7 %"), N("Primer año: el periodo más frágil"),
-            N("Sin seguridad en línea: 41.9 %"), N("Mejor F1: 0.638 · Random Forest + SMOTE"), N("SMOTE mejoró 6 de 7 familias"), N("Contrato, internet y antigüedad lideran SHAP"),
-            N("LinearSVC: 36× más rápido que SVC RBF"), N("Successive Halving: 7.1× menos tiempo en SVM"))
+            N("Sin seguridad en línea: 41.9 %"), N("Contrato, internet y antigüedad lideran SHAP"), N("Doce modelos finales: 11 referencias y RegionalMAPEM"),
+            N("RegionalMAPEM: log-loss 0.41127"), N("Logística con splines: 0.41130"), N("Empate: ninguna prueba rechaza H0 tras Holm"), N("Novedad y código propio: sí · superioridad: no"))
 
 ticker <- function() div(class = "ticker-track", lapply(rep(TICKER, 2), function(t) tags$span(tags$i(class = "tick-dot"), T(t))))
 
@@ -26,6 +26,10 @@ app_ui <- function(req) {
       # El tema se aplica antes de pintar para evitar un destello del tema equivocado.
       tags$script(HTML('try{var t=JSON.parse(localStorage.getItem("theme"));if(t)document.documentElement.dataset.theme=t;var l=JSON.parse(localStorage.getItem("lang"));if(l)document.documentElement.lang=l;}catch(e){}')),
       tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"),
+      # Fórmulas del markdown de «Modelos finales» (equivale a dcc.Markdown(mathjax=True)).
+      tags$link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"),
+      tags$script(defer = NA, src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"),
+      tags$script(defer = NA, src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"),
       tags$link(rel = "stylesheet", href = "style.css"), tags$link(rel = "stylesheet", href = "shiny.css"),
       tags$script(src = "cover.js"), tags$script(src = "app.js"), tags$script(src = "antena.js")),
     div(id = "shell", class = "shell cover-mode",

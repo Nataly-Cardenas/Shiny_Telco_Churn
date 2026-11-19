@@ -100,7 +100,8 @@
   function initTable(el) {
     if (el.dataset.ready) return; el.dataset.ready = '1';
     var tbody = q('tbody', el), rows = qa('tr', tbody), size = parseInt(el.dataset.pageSize || '10', 10), page = 0, sortCol = -1, dir = 1;
-    var heads = qa('thead tr:first-child th', el), filters = qa('.dt-filter input', el), pager = q('.dt-pager', el), view = rows;
+    var ICON = {}; qa('.dt-icons > span', el).forEach(function (x) { ICON[x.dataset.k] = x.innerHTML; });   // íconos generados en R (table_ui)
+    var heads = qa('thead tr:first-child th', el), filters = qa('.dt-filter input[type=text]', el), pager = q('.dt-pager', el), view = rows;
     function cellVal(r, j, num) { var t = r.children[j].textContent; return num ? (t === '' ? -Infinity : parseFloat(t)) : t.toLowerCase(); }
     function render() {
       view = rows.filter(function (r) {
@@ -113,19 +114,59 @@
       var pages = Math.max(1, Math.ceil(view.length / size)); page = Math.min(page, pages - 1);
       tbody.innerHTML = ''; view.slice(page * size, page * size + size).forEach(function (r) { tbody.appendChild(r); });
       heads.forEach(function (h, j) { h.dataset.sort = j === sortCol ? (dir > 0 ? 'asc' : 'desc') : ''; });
-      pager.innerHTML = pages > 1 ? '<button data-p="first">«</button><button data-p="prev">‹</button><span><input type="number" min="1" max="' + pages + '" value="' + (page + 1) + '"> / ' + pages + '</span><button data-p="next">›</button><button data-p="last">»</button>' : '';
+      // Paginador con el mismo marcado e íconos que el DataTable de Dash.
+      var dis = function (c) { return c ? ' disabled' : ''; }, first = page === 0, last = page >= pages - 1;
+      pager.innerHTML = pages > 1 ? '<div class="previous-next-container">' +
+        '<button class="first-page" data-p="first"' + dis(first) + '>' + ICON.dl + '</button><button class="previous-page" data-p="prev"' + dis(first) + '>' + ICON.l + '</button>' +
+        '<div class="page-number"><div class="current-page-container"><div class="current-page-shadow">' + (page + 1) + '</div><input type="text" class="current-page" placeholder="' + (page + 1) + '" value=""></div> / <div class="last-page">' + pages + '</div></div>' +
+        '<button class="next-page" data-p="next"' + dis(last) + '>' + ICON.r + '</button><button class="last-page" data-p="last"' + dis(last) + '>' + ICON.dr + '</button></div>' : '';
     }
     heads.forEach(function (h, j) { h.addEventListener('click', function () { if (sortCol === j) dir = -dir; else { sortCol = j; dir = 1; } render(); }); });
     filters.forEach(function (f) { f.addEventListener('input', function () { page = 0; render(); }); });
+    // Como en Dash, el texto «filter data...» solo aparece en la primera columna, y solo si cabe.
+    var ctx = document.createElement('canvas').getContext('2d'); ctx.font = '400 13.5px Inter, sans-serif';
+    requestAnimationFrame(function () { filters.forEach(function (f, j) { if (j > 0 || ctx.measureText(f.placeholder).width > f.clientWidth) f.placeholder = ''; }); });
     pager.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return; var pages = Math.ceil(view.length / size);
       page = { first: 0, prev: Math.max(0, page - 1), next: Math.min(pages - 1, page + 1), last: pages - 1 }[b.dataset.p]; render();
     });
     pager.addEventListener('change', function (e) { var v = parseInt(e.target.value, 10); if (v > 0) { page = v - 1; render(); } });
+    pager.addEventListener('keydown', function (e) { if (e.key === 'Enter' && e.target.matches('input')) e.target.blur(); });
     render();
   }
 
-  function scan() { qa('.dtable').forEach(initTable); }
+  /* ---------- fórmulas (KaTeX) ---------- */
+  function renderMath() {
+    if (!window.renderMathInElement) return;
+    qa('.md-math:not([data-math])').forEach(function (el) {
+      el.dataset.math = '1';
+      window.renderMathInElement(el, { delimiters: [{ left: '$$', right: '$$', display: false }, { left: '$', right: '$', display: false }], throwOnError: false });
+    });
+  }
+
+  /* ---------- cajas numéricas con − y + (como dcc.Input de Dash 4) ---------- */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.dash-input-stepper'); if (!b) return;
+    var inp = document.getElementById(b.getAttribute('aria-controls')); if (!inp) return;
+    var st = parseFloat(inp.step) || 1, v = parseFloat(inp.value); if (isNaN(v)) v = parseFloat(inp.min) || 0;
+    v += b.classList.contains('dash-stepper-increment') ? st : -st;
+    if (inp.min !== '') v = Math.max(parseFloat(inp.min), v); if (inp.max !== '') v = Math.min(parseFloat(inp.max), v);
+    var d = (String(st).split('.')[1] || '').length; inp.value = d ? v.toFixed(d).replace(/\.?0+$/, '') : String(v);
+    jQuery(inp).trigger('change');
+  });
+
+  /* ---------- desplegable múltiple: contador «N selected» como el de Dash 4 ---------- */
+  function countBadge(sel) {
+    var ctl = sel.nextElementSibling; if (!ctl || !ctl.classList.contains('multi')) return;
+    var b = ctl.querySelector('.dd-count'); if (!b) { b = document.createElement('span'); b.className = 'dd-count'; ctl.appendChild(b); }
+    var n = sel.selectize ? sel.selectize.items.length : 0, t = n + ' selected';
+    if (b.textContent !== t) b.textContent = t;   // sin cambios no se toca el DOM (el MutationObserver volvería a llamar)
+    if (b.style.display !== (n ? '' : 'none')) b.style.display = n ? '' : 'none';
+  }
+  jQuery(document).on('change', 'select[multiple]', function () { countBadge(this); });
+
+  function scan() {
+    qa('select[multiple]').forEach(function (sel) { if (sel.selectize) countBadge(sel); else setTimeout(function () { if (sel.selectize) countBadge(sel); }, 50); }); qa('.dtable').forEach(initTable); renderMath(); }
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
 
   /* ---------- mensajes del servidor ---------- */

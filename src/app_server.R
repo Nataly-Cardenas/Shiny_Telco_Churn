@@ -28,7 +28,7 @@ app_server <- function(input, output, session) {
   # ---------------------------------------------------------------- páginas
   output$content <- renderUI({
     L(); key <- route()
-    tab <- c(eda = "eda-tabs", preprocesamiento = "prep-tabs", modelado = "model-tabs", simulador = "sim-tabs")[key]
+    tab <- c(eda = "eda-tabs", preprocesamiento = "prep-tabs", modelado = "model-tabs", modelos_ml = "modelos-tabs")[key]
     div(class = paste("page", key), PAGES[[key]](isolate(d()), if (is.na(tab)) 0 else isolate(as.integer(input[[tab]] %||% 0))))
   })
   tab_value <- function(id) as.integer(input[[id]] %||% 0)
@@ -37,7 +37,7 @@ app_server <- function(input, output, session) {
   output$`eda-tabs-body` <- renderUI({ L(); eda_tab(tab_value("eda-tabs"), d(), input) })
   output$`prep-tabs-body` <- renderUI({ L(); prep_tab(tab_value("prep-tabs")) })
   output$`model-tabs-body` <- renderUI({ L(); model_tab(tab_value("model-tabs"), input) })
-  output$`sim-tabs-body` <- renderUI({ L(); sim_tab(tab_value("sim-tabs"), input) })
+  output$`modelos-tabs-body` <- renderUI({ L(); modelos_tab(tab_value("modelos-tabs"), input) })
 
   # ---------------------------------------------------------------- análisis exploratorio
   output$`uni-num-output` <- renderUI({ req(input$`uni-num`); L(); uni_num(input$`uni-num`, d()) })
@@ -48,6 +48,7 @@ app_server <- function(input, output, session) {
   bi_cat_r <- reactive({ req(input$`bi-cat`); L(); bi_cat(input$`bi-cat`, d()) })
   output$`bi-cat-output` <- renderUI({ L(); bi_cat_r()[[1]] })
   output$`bi-holm-output` <- renderUI({ L(); bi_cat_r()[[2]] })
+  output$`free-output` <- renderUI({ req(input$`free-x`, input$`free-y`, input$`free-color`); L(); free_output(input$`free-x`, input$`free-y`, input$`free-color`, d()) })
   output$`explorer-table` <- renderUI({ L(); x <- d(); if (!nrow(x)) empty() else table_ui(x[input$`explorer-cols` %||% "customerID"], page_size = 12) })
   output$export <- downloadHandler(filename = "telco_seleccion.csv", content = function(file) {
     x <- d()[input$`explorer-cols` %||% "customerID"]
@@ -63,14 +64,34 @@ app_server <- function(input, output, session) {
   output$`eff-variants-output` <- renderUI({ req(input$`eff-family`); L(); eff_variants(input$`eff-family`) })
   output$`eff-scale-output` <- renderUI({ req(input$`eff-scale`); L(); eff_scale(input$`eff-scale`) })
 
-  # ---------------------------------------------------------------- simulador
-  output$`sim-output` <- renderUI({
-    req(input$`sim-contract`, input$`sim-internet`, input$`sim-payment`); L()
-    sim_output(input$`sim-contract`, input$`sim-internet`, input$`sim-payment`, input$`sim-tenure` %||% 4, input$`sim-monthly` %||% 85)
+  # ---------------------------------------------------------------- modelos finales
+  output$`lideres-tabla` <- renderUI({ L(); tabla_lideres(isTRUE(input$`lideres-ablacion`)) })
+  output$`diag-salida` <- renderUI({ req(input$`diag-modelo`, input$`diag-eval`); L(); diagnostico_salida(input$`diag-modelo`, input$`diag-eval`) })
+  output$`shap-salida` <- renderUI({ req(input$`shap-modelo`); L(); shap_salida(input$`shap-modelo`) })
+
+  # Predicción en vivo: se recalcula al pulsar Predecir, al cambiar de modelo o de umbral, o al cargar un cliente del hold-out.
+  entrada <- reactiveVal(cliente_valores(EJEMPLO()))
+  formulario <- function() setNames(lapply(ENTRADA, function(c) {
+    v <- input[[paste0("in-", c)]]
+    if (is.null(v) || (is.character(v) && !nzchar(v))) NULL else if (c == "SeniorCitizen") as.integer(v) else v
+  }), ENTRADA)
+  observeEvent(input$`pred-ejemplo`, {
+    row <- as.integer(input$`pred-ejemplo`); val <- cliente_valores(row)
+    if (identical(val, entrada())) return()
+    for (c in ENTRADA) {
+      id <- paste0("in-", c)
+      if (c %in% c("tenure", "MonthlyCharges", "TotalCharges")) updateNumericInput(session, id, value = val[[c]] %||% NA)
+      else updateSelectizeInput(session, id, selected = as.character(val[[c]]))
+    }
+    entrada(val)
+  }, ignoreInit = TRUE)
+  observeEvent(input$`pred-boton`, entrada(formulario()), ignoreInit = TRUE)
+  observeEvent(input$`pred-modelo`, { f <- formulario(); if (!all(vapply(f, is.null, TRUE))) entrada(f) }, ignoreInit = TRUE)
+  observeEvent(input$`pred-azar`, updateSelectizeInput(session, "pred-ejemplo", selected = as.character(sample(TEST_IDS, 1))), ignoreInit = TRUE)
+  output$`pred-salida` <- renderUI({
+    req(input$`pred-modelo`); L()
+    prediccion_salida(input$`pred-modelo`, entrada(), input$`pred-umbral-modo` %||% "f1", input$`pred-umbral` %||% .5)
   })
-  observeEvent(input$`real-random`, updateSelectizeInput(session, "real-id", selected = sample(TEST_IDS, 1)), ignoreInit = TRUE)
-  output$`real-output` <- renderUI({ req(input$`real-id`); L(); real_output(input$`real-id`) })
-  output$`threshold-output` <- renderUI({ req(input$`threshold-model`); L(); threshold_output(input$`threshold-model`, input$threshold %||% .5) })
 
   # ---------------------------------------------------------------- asistente
   log <- reactiveVal(list())

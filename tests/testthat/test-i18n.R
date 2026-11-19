@@ -8,7 +8,7 @@ test_that("every interface text has an English translation", {
   # Identificadores y nombres propios que se escriben igual en los dos idiomas.
   same <- c("Recall", "Precision", "ROC-AUC", "Accuracy", "Jupyter Book", "Test")
   missing <- setdiff(strings[!grepl("^\\s*$", strings)], c(names(EN), same))
-  expect_equal(missing, character())
+  expect_equal(missing, character(), info = paste(missing, collapse = " | "))
 })
 
 test_that("the cover, charts and menus switch language", {
@@ -17,8 +17,8 @@ test_that("the cover, charts and menus switch language", {
   expect_match(html, "Lost", fixed = TRUE)
   expect_false(grepl("Entrar al dashboard", html, fixed = TRUE))
   # Textos largos armados con paste0 (no los detecta la búsqueda de literales).
-  intro <- render(introduccion(rows(TRAIN_IDS))); sim <- render(sim_tab(0, list()))
+  intro <- render(introduccion(rows(TRAIN_IDS))); ml <- render(modelos_tab(0, list()))
   for (es in c("El conjunto Telco Customer Churn", "Identificar a los clientes de una empresa")) expect_false(grepl(es, intro, fixed = TRUE))
-  expect_false(grepl("Es la tasa de abandono observada", sim, fixed = TRUE))
+  expect_false(grepl("Cada benchmark se optimizó", ml, fixed = TRUE))
   set_lang("es")
 })

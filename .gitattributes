@@ -1,0 +1,5 @@
+# Estilos y animaciones copiados sin cambios de assets/ del dashboard de Dash (Dash_Telco_Churn_ML, rama dash-original-con-ML).
+# Son de terceros para este repositorio: GitHub no los cuenta en las estadísticas de lenguajes.
+www/style.css linguist-vendored
+www/cover.js linguist-vendored
+www/antena.js linguist-vendored
