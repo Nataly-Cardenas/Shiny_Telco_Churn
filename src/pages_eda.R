@@ -301,18 +301,19 @@ uni_num <- function(var, d) {
 
 uni_cat <- function(var, d) {
   if (!nrow(d)) return(empty())
-  variables <- if (var == "__all__") CATEGORICAL else var
-  cols <- if (length(variables) > 1) 4 else 1; nr <- ceiling(length(variables) / cols)
-  plots <- lapply(variables, function(c) {
+  bars <- function(c, small) {
     v <- sort(table(as.character(cat_name(d[[c]])))); pc <- 100 * v / sum(v)
-    plot_ly() %>% add_trace(type = "bar", x = as.vector(v), y = names(v), orientation = "h", marker = list(color = BASE), text = sprintf("%.1f%%", pc),
+    # En la vista de todas las variables las categorías largas pasan a dos líneas para no invadir la gráfica vecina.
+    lab <- if (small) vapply(names(v), function(x) if (nchar(x) > 14) sub(" (?=\\S+$)|^(\\S+ \\S+) ", "\\1<br>", x, perl = TRUE) else x, "") else names(v)
+    plot_ly() %>% add_trace(type = "bar", x = as.vector(v), y = lab, orientation = "h", marker = list(color = BASE), text = sprintf("%.1f%%", pc),
                             textposition = "outside", cliponaxis = FALSE, hovertemplate = paste0("%{y}<br>", T("Clientes"), ": %{x}<extra></extra>")) %>%
-      layout(yaxis = cat_axis(names(v)))
-  })
-  f <- subplots(plots, variables, nrows = nr, hspace = .12, vspace = if (nr > 1) .08 else .1)
-  h <- if (length(variables) == 1) 320 else 230 * nr
-  insight <- if (length(variables) > 1) T("Distribución de todas las variables categóricas en la selección.") else fmt(T("Frecuencia de cada categoría de {v}."), v = var)
-  div(graph(f, h, FALSE), tags$p(class = "insight", insight))
+      layout(yaxis = cat_axis(unname(lab)), xaxis = list(range = c(0, max(v) * 1.3), showticklabels = !small, fixedrange = small))
+  }
+  if (var != "__all__")
+    return(div(graph(bars(var, FALSE), 320, FALSE), tags$p(class = "insight", fmt(T("Frecuencia de cada categoría de {v}."), v = var))))
+  # Una gráfica pequeña por variable en una cuadrícula: los títulos y las etiquetas nunca se cruzan, sea cual sea el ancho de la pantalla.
+  div(div(class = "uni-grid", lapply(CATEGORICAL, function(c) div(class = "uni-cell", tags$h4(c), graph(config(bars(c, TRUE), displayModeBar = FALSE), 150, FALSE, list(l = 10, r = 10, t = 4, b = 4))))),
+      tags$p(class = "insight", T("Distribución de todas las variables categóricas en la selección.")))
 }
 
 bi_num <- function(var, d) {

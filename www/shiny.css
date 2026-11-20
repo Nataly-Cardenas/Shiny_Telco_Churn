@@ -137,3 +137,9 @@ html[data-theme=light] .dash-stepper-increment { border-left-color: #dfe5ee; }
 .selectize-control.multi .selectize-input::after { content: ''; position: absolute; right: 16px; top: 50%; width: 6px; height: 6px; margin-top: -5px; border-style: solid; border-color: var(--soft); border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
 html[data-theme=light] .selectize-control.multi .dd-count { background: #e0f2fe; color: #475569; }
 .selectize-control.multi .selectize-input.has-items { padding: 8px 120px 8px 12px; }
+
+/* EDA · univariado: todas las variables categóricas, una gráfica pequeña por variable */
+.uni-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 22px; margin-top: 8px; }
+@media (max-width: 1100px) { .uni-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .uni-grid { grid-template-columns: 1fr; } }
+.uni-cell h4 { margin: 0 0 4px; text-align: center; font: 600 14px Inter, sans-serif; color: var(--text); }
