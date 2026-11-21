@@ -47,7 +47,8 @@ autoras <- function(d) {
   people <- list(c("laura.jpg", "Laura S. Rivera Figueredo", "sriveral@uninorte.edu.co", "https://github.com/lauraformore", "https://www.linkedin.com/in/laura-s-rivera-figueredo-862451315/"),
                  c("nataly.jpg", "Natalý A. Cárdenas Izaquita", "nizaquita@uninorte.edu.co", "https://github.com/Nataly-Cardenas", "https://www.linkedin.com/in/n%C3%A1taly-c%C3%A1rdenas-iz%C3%A1quita"))
   res <- list(c("code", T("Código y notebooks"), T("Repositorio Telco_Churn_JBook"), REPO), c("sliders", T("Este dashboard"), T("Repositorio Shiny_Telco_Churn"), SHINY_REPO),
-              c("table", T("Conjunto de datos"), "Kaggle · Telco Customer Churn (IBM)", "https://www.kaggle.com/datasets/blastchar/telco-customer-churn"), c("file", "Paper", T("Versión web y PDF"), paste0(BOOK, "paper.html")))
+              c("table", T("Conjunto de datos"), "Kaggle · Telco Customer Churn (IBM)", "https://www.kaggle.com/datasets/blastchar/telco-customer-churn"), c("file", "Paper", T("Versión web y PDF"), paste0(BOOK, "paper.html")),
+              c("play", T("Video"), T("El proyecto explicado en video."), "https://www.youtube.com/watch?v=QS8kNlcO98M"))
   tagList(page_head("autoras", T("El equipo detrás del proyecto y los recursos para profundizar.")),
           div(class = "authors", lapply(people, function(p) div(class = "author",
               div(class = "avatar", tags$img(src = paste0("img/", p[1]), alt = fmt(T("Foto de {n}"), n = p[2]))), tags$h2(p[2]),
@@ -59,7 +60,7 @@ autoras <- function(d) {
           tags$a(class = "book-cta", href = BOOK, target = "_blank", tags$span(class = "book-icon", icon("book")),
                  div(eyebrow("JUPYTER BOOK"), tags$h2(T("Lee el proyecto completo")), tags$p(T("Introducción, marco teórico, EDA, preprocesamiento, modelado y paper."))),
                  tags$span(class = "book-arrow", icon("arrow"))),
-          do.call(grid, c(lapply(res, function(r) tags$a(class = "res", href = r[4], target = "_blank", tags$h4(icon(r[1]), r[2]), tags$p(r[3]))), cols = 4)))
+          do.call(grid, c(lapply(res, function(r) tags$a(class = "res", href = r[4], target = "_blank", tags$h4(icon(r[1]), r[2]), tags$p(r[3]))), cols = 5)))
 }
 
 PAGES <- list(inicio = function(d, tab) cover(), introduccion = function(d, tab) introduccion(d), eda = eda_page, preprocesamiento = preprocesamiento,
