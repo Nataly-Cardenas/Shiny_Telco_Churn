@@ -1440,5 +1440,8 @@
 "Valor del umbral personalizado": "Custom threshold value",
 "umbral personalizado = {u}": "custom threshold = {u}",
 "Los modelos de la predicción en vivo son versiones re-optimizadas sin balanceo, con el log-loss como criterio; por eso no coinciden con estas combinaciones, que se muestran como referencia de la comparación previa.": "The live-prediction models are re-optimized versions without balancing, using log-loss as the criterion; that is why they do not match these combinations, which are shown as a reference of the earlier comparison.",
-"Repositorio Shiny_Telco_Churn": "Shiny_Telco_Churn repository"
+"Repositorio Shiny_Telco_Churn": "Shiny_Telco_Churn repository",
+"Video explicativo": "Explainer video",
+"El proyecto explicado en video.": "The project explained on video.",
+"Video explicativo del proyecto Telco Churn": "Telco Churn project explainer video"
 }
